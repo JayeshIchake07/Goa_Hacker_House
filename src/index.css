@@ -956,3 +956,330 @@ a:hover {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   GENERATIVE ID CARD MAKER SPECIFIC STYLES
+═══════════════════════════════════════════════════════════════════════════ */
+
+/* Mood grid */
+.mood-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.mood-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 6px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  background: var(--bg-inner-panel);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--t-fast);
+  font-family: inherit;
+}
+.mood-card:hover {
+  border-color: var(--accent-cyan);
+  background: var(--accent-glow-cyan);
+  color: var(--text-main);
+  transform: translateY(-1px);
+}
+.mood-card.active {
+  border-color: var(--accent-cyan);
+  background: var(--accent-glow-cyan);
+  color: var(--text-main);
+  box-shadow: 0 0 12px var(--accent-glow-cyan);
+}
+.mood-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.mood-name {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.mood-desc {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  display: none;
+}
+
+/* Palette swatches */
+.palette-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.palette-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  background: var(--bg-inner-panel);
+  cursor: pointer;
+  transition: all var(--t-fast);
+  font-family: inherit;
+}
+.palette-swatch:hover {
+  border-color: var(--accent-gold);
+  background: rgba(255, 184, 0, 0.04);
+  transform: translateY(-1px);
+}
+.palette-swatch.active {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-glow-cyan);
+}
+.swatch-colors {
+  display: flex;
+  gap: 3px;
+}
+.swatch-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.swatch-name {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+/* Custom palette configuration */
+.custom-palette-toggle {
+  margin-bottom: 6px;
+}
+.custom-palette {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: var(--bg-inner-panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  margin-bottom: 8px;
+}
+.color-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+.color-picker-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+}
+.color-picker-group label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+.color-picker-group input[type="color"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 32px;
+  height: 26px;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px;
+}
+.color-picker-group input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.color-picker-group input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 4px;
+}
+
+/* Contrast badges */
+.contrast-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  font-size: 0.7rem;
+  font-weight: 500;
+  transition: all var(--t-normal);
+  margin-top: 8px;
+}
+.contrast-badge.pass {
+  background: rgba(52, 199, 89, 0.1);
+  border: 1px solid rgba(52, 199, 89, 0.2);
+  color: #34c759;
+}
+.contrast-badge.fail {
+  background: rgba(255, 69, 58, 0.1);
+  border: 1px solid rgba(255, 69, 58, 0.2);
+  color: #ff453a;
+}
+.contrast-icon {
+  font-size: 0.9rem;
+}
+
+/* Shiny Chrome Finish slider/toggle styles */
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+}
+.toggle-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+.toggle-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  cursor: pointer;
+  accent-color: var(--accent-cyan);
+}
+.toggle-text {
+  display: flex;
+  flex-direction: column;
+}
+.toggle-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.toggle-subtitle {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Mode toggles and skills list */
+.role-mode-toggle {
+  display: flex;
+  background: var(--bg-inner-panel);
+  padding: 3px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--panel-border);
+  margin-top: 4px;
+}
+.btn-mode {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.btn-mode:hover {
+  color: var(--text-main);
+}
+.btn-mode.active {
+  background: var(--accent-cyan);
+  color: #000;
+  font-weight: 700;
+}
+.skills-inputs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-top: 8px;
+}
+.skills-inputs .skill-field {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg-inner-panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--text-main);
+  font-size: 0.78rem;
+  outline: none;
+  transition: border-color var(--t-fast);
+}
+.skills-inputs .skill-field:focus {
+  border-color: var(--accent-cyan);
+}
+
+/* Card flip layouts */
+.preview-toolbar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+  width: 100%;
+}
+.btn-flip {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(16, 185, 129, 0.3));
+  border: 1.5px solid rgba(52, 211, 153, 0.6);
+  color: #A7F3D0;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.2);
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-flip:hover {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.35), rgba(16, 185, 129, 0.5));
+  border-color: #34D399;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+}
+.flip-icon {
+  font-size: 1.1rem;
+  display: inline-block;
+  transition: transform 0.4s ease;
+}
+.btn-flip:hover .flip-icon {
+  transform: rotate(180deg);
+}
+
+/* Action button configurations */
+.export-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.btn-pdf-full {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, #10B981, #059669);
+  color: #FFFFFF;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  padding: 12px;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-pdf-full:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45);
+  transform: translateY(-1px);
+}
+

@@ -1,4 +1,4 @@
-export type FormatMode = 'profile' | 'builder';
+export type FormatMode = 'front' | 'back';
 
 export interface CropState {
   x: number; // offset X in pixels
@@ -52,3 +52,69 @@ export const INITIAL_BUILDER_INFO: BuilderInfo = {
   techStack: "",
 };
 
+// --- Generative ID Maker Types ---
+
+export type MoodType = 'corporate' | 'creative' | 'elegant' | 'bold' | 'minimal';
+
+export interface PaletteColors {
+  [key: string]: string;
+  primary: string;
+  secondary: string;
+  surface: string;
+  text: string;
+  background: string;
+}
+
+export interface PalettePreset {
+  name: string;
+  colors: PaletteColors;
+}
+
+export type SocialPlatform = 'instagram' | 'x' | 'discord' | 'custom';
+
+export interface Shape {
+  type: string;
+  isOverlay: boolean;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+  opacity: number;
+  color: string;
+  blur: number;
+  useGradient?: boolean;
+  gradientColor?: string;
+  blobPoints?: number;
+  blobIrregularity?: number;
+  // Wiggle-specific
+  startX?: number;
+  startY?: number;
+  endX?: number;
+  endY?: number;
+  waveAmplitude?: number;
+  waveFrequency?: number;
+  waveLineWidth?: number;
+  // Arc-specific
+  arcRadius?: number;
+  arcStartAngle?: number;
+  arcSweep?: number;
+  arcLineWidth?: number;
+}
+
+export interface IdCardTemplate {
+  canvas: { widthPx: number; heightPx: number; bleedPx: number };
+  cornerRadiusPx: number;
+  border: { widthPx: number };
+  header: { heightPct: number; hatchAngle: number; hatchSpacing: number; hatchOpacity: number };
+  portrait: { xPct: number; yPct: number; widthPct: number; heightPct: number; borderRadiusPx: number };
+  footer: { yPct: number; heightPct: number; hatchAngle: number; hatchSpacing: number; hatchOpacity: number };
+  textFields: {
+    eventName: { zone: string; relXPct: number; relYPct: number; font: string; fontSizePx: number; fontWeight: number; align: string };
+    teamName: { zone: string; relXPct: number; relYPct: number; font: string; fontSizePx: number; fontWeight: number; align: string };
+    memberName: { zone: string; relXPct: number; relYPct: number; font: string; fontSizePx: number; fontWeight: number; align: string };
+    role: { zone: string; relXPct: number; relYPct: number; font: string; fontSizePx: number; fontWeight: number; align: string };
+  };
+  logo: { relXPct: number; relYPct: number; maxWidthPx: number; maxHeightPx: number };
+  layers: string[];
+}

@@ -1,22 +1,52 @@
 import React, { useRef, useState } from "react";
-import type { BuilderInfo, CropState } from "../types";
+import type { BuilderInfo, CropState, PaletteColors } from "../types";
 import { INITIAL_CROP_STATE } from "../types";
 import { getRandomTitle, ROLES } from "../utils/roleTitles";
 import {
   Upload, Loader2, ZoomIn, ZoomOut, RotateCw, RefreshCw,
-  User, AtSign, Sparkles, Dices, Cpu, Image as ImageIcon
+  User, AtSign, Sparkles, Cpu, Image as ImageIcon,
+  Settings, Palette, Dices, AlertTriangle, Check
 } from "lucide-react";
 import { convertHeicToJpeg, isHeicFile, readFileAsDataURL } from "../utils/heic";
+import { palettePresets, getContrastRatio, meetsWCAG } from "../utils/palette";
+import { moodPresets } from "../utils/moods";
 
 interface ControlPanelProps {
-  mode: "profile" | "builder";
-  onModeChange: (m: "profile" | "builder") => void;
   imageSrc: string | null;
   onImageSelected: (dataUrl: string) => void;
   crop: CropState;
   onCropChange: (c: CropState) => void;
   builderInfo: BuilderInfo;
   onBuilderInfoChange: (b: BuilderInfo) => void;
+
+  eventName: string;
+  onEventNameChange: (s: string) => void;
+  teamName: string;
+  onTeamNameChange: (s: string) => void;
+  roleMode: "single" | "skills";
+  onRoleModeChange: (m: "single" | "skills") => void;
+  skillsList: string[];
+  onSkillsListChange: (list: string[]) => void;
+  socialPlatform: string;
+  onSocialPlatformChange: (s: string) => void;
+  socialHandle: string;
+  onSocialHandleChange: (s: string) => void;
+
+  mood: string;
+  onMoodChange: (m: string) => void;
+  palette: PaletteColors;
+  onPaletteChange: (p: PaletteColors) => void;
+  borderColor: string;
+  onBorderColorChange: (s: string) => void;
+  roleColor: string;
+  onRoleColorChange: (s: string) => void;
+  useChromeEffect: boolean;
+  onUseChromeEffectChange: (b: boolean) => void;
+  shapeSeed: number;
+  onShapeSeedChange: (n: number) => void;
+
+  onExportJpg: (scale: number) => void;
+  onExportPdf: () => void;
 }
 
 const PRESETS = [
@@ -26,21 +56,49 @@ const PRESETS = [
 ];
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
-  mode,
-  onModeChange,
   imageSrc,
   onImageSelected,
   crop,
   onCropChange,
   builderInfo,
   onBuilderInfoChange,
+
+  eventName,
+  onEventNameChange,
+  teamName,
+  onTeamNameChange,
+  roleMode,
+  onRoleModeChange,
+  skillsList,
+  onSkillsListChange,
+  socialPlatform,
+  onSocialPlatformChange,
+  socialHandle,
+  onSocialHandleChange,
+
+  mood,
+  onMoodChange,
+  palette,
+  onPaletteChange,
+  borderColor,
+  onBorderColorChange,
+  roleColor,
+  onRoleColorChange,
+  useChromeEffect,
+  onUseChromeEffectChange,
+  onShapeSeedChange,
+
+  onExportJpg,
+  onExportPdf,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDrag, setIsDrag] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showCustomPalette, setShowCustomPalette] = useState(false);
+  const [spinRegen, setSpinRegen] = useState(false);
 
-  // ── File processing ────────────────────────────────────────────────────────
+  // File processing
   const processFile = async (file: File) => {
     setErrorMsg(null);
     setIsLoading(true);
@@ -61,45 +119,49 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     if (e.dataTransfer.files?.[0]) processFile(e.dataTransfer.files[0]);
   };
 
-  // ── Crop helpers ──────────────────────────────────────────────────────────
+  // Crop helpers
   const zoom   = (d: number) => onCropChange({ ...crop, scale: Math.min(3, Math.max(0.4, crop.scale + d)) });
   const rotate = ()          => onCropChange({ ...crop, rotation: (crop.rotation + 90) % 360 });
   const reset  = ()          => onCropChange({ ...INITIAL_CROP_STATE });
   const pan    = (dx: number, dy: number) => onCropChange({ ...crop, x: crop.x + dx, y: crop.y + dy });
 
-  // ── Builder form helpers ──────────────────────────────────────────────────
-  const set = (patch: Partial<BuilderInfo>) => onBuilderInfoChange({ ...builderInfo, ...patch });
-  const shuffleTitle = () => set({ title: getRandomTitle(builderInfo.role, builderInfo.title) });
+  // Shuffle auto role class
+  const shuffleTitle = () => {
+    onBuilderInfoChange({
+      ...builderInfo,
+      title: getRandomTitle(builderInfo.role, builderInfo.title)
+    });
+  };
+
+  // Regeneration of shapes
+  const handleRegenerateShapes = () => {
+    setSpinRegen(true);
+    onShapeSeedChange(Date.now());
+    setTimeout(() => setSpinRegen(false), 400);
+  };
+
+  // Custom palette color input updater
+  const handleCustomColorChange = (key: keyof PaletteColors, value: string) => {
+    onPaletteChange({
+      ...palette,
+      [key]: value
+    });
+  };
+
+  // Contrast Calculation
+  const contrastRatio = getContrastRatio(palette.text, palette.background);
+  const contrastPasses = meetsWCAG(palette.text, palette.background);
 
   return (
     <div className="control-panel">
 
-      {/* ── Format Tabs ──────────────────────────────────────────────────── */}
-      <div className="cp-tabs">
-        <button
-          className={`cp-tab ${mode === "profile" ? "cp-tab--active" : ""}`}
-          onClick={() => onModeChange("profile")}
-          type="button"
-        >
-          Single Builder Pass
-        </button>
-        <button
-          className={`cp-tab ${mode === "builder" ? "cp-tab--active" : ""}`}
-          onClick={() => onModeChange("builder")}
-          type="button"
-        >
-          Squad / Team Pass
-        </button>
-      </div>
-
-      {/* ── Section 1: Photo Controls ─────────────────────────────────── */}
+      {/* ── Section 1: Portrait Photo ── */}
       <div className="cp-section">
         <div className="cp-section-label">
           <ImageIcon size={13} />
-          Builder Photo
+          Portrait Photo
         </div>
 
-        {/* Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -108,7 +170,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           onChange={e => e.target.files?.[0] && processFile(e.target.files[0])}
         />
 
-        {/* Upload button / drop zone */}
         <div
           className={`cp-upload ${isDrag ? "cp-upload--drag" : ""}`}
           onDragOver={e => { e.preventDefault(); setIsDrag(true); }}
@@ -118,12 +179,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         >
           {isLoading
             ? <><Loader2 size={18} className="spin" /> Processing…</>
-            : <><Upload size={18} /> {imageSrc ? "Change Photo" : "Upload Photo  (Supports HEIC / iPhone)"}</>
+            : <><Upload size={18} /> {imageSrc ? "Change Photo" : "Upload Photo (Supports HEIC / iPhone)"}</>
           }
         </div>
         {errorMsg && <p className="cp-error">{errorMsg}</p>}
 
-        {/* Preset sample chips */}
         <div className="cp-presets">
           {PRESETS.map(p => (
             <button key={p.label} className="cp-preset-chip" type="button" title={p.label}>
@@ -132,10 +192,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           ))}
         </div>
 
-        {/* Precision controls — only shown after upload */}
         {imageSrc && (
           <div className="cp-precision">
-            {/* Zoom slider */}
             <div className="cp-precision-row">
               <ZoomOut size={14} className="cp-icon-muted" />
               <input
@@ -148,7 +206,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               <span className="cp-zoom-label">{Math.round(crop.scale * 100)}%</span>
             </div>
 
-            {/* Nudge pad */}
             <div className="cp-nudge">
               <div className="cp-nudge-center">
                 <button className="cp-nudge-btn" type="button" onClick={() => pan(0, -20)}>↑</button>
@@ -169,85 +226,313 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         )}
       </div>
 
-      {/* ── Section 2: Builder Profile Details ───────────────────────────── */}
+      {/* ── Section 2: Mood Generator ── */}
       <div className="cp-section">
         <div className="cp-section-label">
-          <User size={13} />
-          Builder Profile
+          <Sparkles size={13} />
+          Mood Shapes
         </div>
-
-        {/* Row 1: Name + Handle */}
-        <div className="cp-form-row">
-          <div className="cp-field">
-            <label className="cp-field-label"><User size={11} /> Full Name / Alias</label>
-            <input
-              type="text"
-              className="cp-input"
-              placeholder="Satoshi Nakamoto"
-              value={builderInfo.name}
-              maxLength={28}
-              onChange={e => set({ name: e.target.value })}
-            />
-          </div>
-          <div className="cp-field">
-            <label className="cp-field-label"><AtSign size={11} /> Twitter / X Handle</label>
-            <input
-              type="text"
-              className="cp-input"
-              placeholder="@satoshi"
-              value={builderInfo.handle}
-              maxLength={20}
-              onChange={e => set({ handle: e.target.value })}
-            />
-          </div>
-        </div>
-
-        {/* Row 2: Builder Class + Randomize */}
-        <div className="cp-field">
-          <label className="cp-field-label"><Sparkles size={11} /> Generated Builder Class / Title</label>
-          <div className="cp-field-row">
-            <input
-              type="text"
-              className="cp-input cp-input--readonly"
-              value={builderInfo.title}
-              readOnly
-            />
-            <button className="cp-randomize-btn" type="button" onClick={shuffleTitle} title="Randomize">
-              <Dices size={15}/> Randomize
-            </button>
-          </div>
-        </div>
-
-        {/* Row 3: Role + Tech Stack */}
-        <div className="cp-form-row">
-          <div className="cp-field">
-            <label className="cp-field-label"><Cpu size={11} /> Role</label>
-            <select
-              className="cp-input cp-select"
-              value={builderInfo.role}
-              onChange={e => {
-                const r = e.target.value;
-                set({ role: r, title: getRandomTitle(r, builderInfo.title) });
-              }}
+        <div className="mood-grid">
+          {Object.entries(moodPresets).map(([key, item]) => (
+            <button
+              key={key}
+              type="button"
+              className={`mood-card ${mood === key ? "active" : ""}`}
+              onClick={() => onMoodChange(key)}
             >
-              {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-            </select>
+              <span className="mood-icon">{item.icon}</span>
+              <span className="mood-name">{item.name}</span>
+            </button>
+          ))}
+        </div>
+        <button
+          className={`cp-quick-btn ${spinRegen ? "spin" : ""}`}
+          type="button"
+          onClick={handleRegenerateShapes}
+          style={{ width: "100%", padding: "0.6rem" }}
+        >
+          <RefreshCw size={13} /> Regenerate Shapes
+        </button>
+      </div>
+
+      {/* ── Section 3: Palette & Colors ── */}
+      <div className="cp-section">
+        <div className="cp-section-label">
+          <Palette size={13} />
+          Color Palette
+        </div>
+
+        <div className="palette-grid">
+          {palettePresets.map((preset, idx) => (
+            <button
+              key={idx}
+              type="button"
+              className={`palette-swatch ${JSON.stringify(palette) === JSON.stringify(preset.colors) ? "active" : ""}`}
+              onClick={() => onPaletteChange({ ...preset.colors })}
+            >
+              <div className="swatch-colors">
+                <span className="swatch-dot" style={{ background: preset.colors.primary }}></span>
+                <span className="swatch-dot" style={{ background: preset.colors.secondary }}></span>
+                <span className="swatch-dot" style={{ background: preset.colors.surface, border: "1px solid rgba(255,255,255,0.15)" }}></span>
+                <span className="swatch-dot" style={{ background: preset.colors.text }}></span>
+                <span className="swatch-dot" style={{ background: preset.colors.background, border: "1px solid rgba(255,255,255,0.15)" }}></span>
+              </div>
+              <span className="swatch-name">{preset.name}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="custom-palette-toggle">
+          <button
+            type="button"
+            className="cp-quick-btn"
+            style={{ width: "100%" }}
+            onClick={() => setShowCustomPalette(!showCustomPalette)}
+          >
+            <Settings size={13} /> Custom Palette Colors
+          </button>
+        </div>
+
+        {showCustomPalette && (
+          <div className="custom-palette">
+            {(['primary', 'secondary', 'surface', 'text', 'background'] as const).map(key => (
+              <div className="color-picker-group" key={key}>
+                <label style={{ textTransform: "capitalize" }}>{key}</label>
+                <input
+                  type="color"
+                  value={palette[key]}
+                  onChange={e => handleCustomColorChange(key, e.target.value)}
+                />
+              </div>
+            ))}
           </div>
-          <div className="cp-field">
-            <label className="cp-field-label"><Cpu size={11} /> Stack / Primary Tech</label>
+        )}
+
+        <div className={`contrast-badge ${contrastPasses ? 'pass' : 'fail'}`}>
+          <span className="contrast-icon">{contrastPasses ? <Check size={14} /> : <AlertTriangle size={14} />}</span>
+          <span className="contrast-text">Contrast: {contrastRatio.toFixed(1)}:1 {contrastPasses ? '(WCAG AA ✓)' : '(Below 4.5:1)'}</span>
+        </div>
+      </div>
+
+      {/* ── Section 4: Shiny Chrome Effect ── */}
+      <div className="cp-section">
+        <div className="cp-section-label">
+          <Sparkles size={13} />
+          Effects
+        </div>
+        <div className="toggle-group">
+          <label className="toggle-label" htmlFor="chromeToggle">
             <input
-              type="text"
-              className="cp-input"
-              placeholder="Rust / Next.js / AI"
-              value={builderInfo.techStack}
-              maxLength={32}
-              onChange={e => set({ techStack: e.target.value })}
+              type="checkbox"
+              id="chromeToggle"
+              checked={useChromeEffect}
+              onChange={e => onUseChromeEffectChange(e.target.checked)}
+            />
+            <span className="toggle-text">
+              <strong className="toggle-title">Shiny Chrome Finish</strong>
+              <span className="toggle-subtitle">Metallic reflections & liquid chrome gradients</span>
+            </span>
+          </label>
+        </div>
+      </div>
+
+      {/* ── Section 5: Border & Role Color ── */}
+      <div className="cp-section">
+        <div className="cp-section-label">
+          <Settings size={13} />
+          Border & Role Colors
+        </div>
+        <div className="color-row">
+          <div className="color-picker-group">
+            <label htmlFor="borderColorPicker">Card Border</label>
+            <input
+              type="color"
+              id="borderColorPicker"
+              value={borderColor}
+              onChange={e => onBorderColorChange(e.target.value)}
+            />
+          </div>
+          <div className="color-picker-group">
+            <label htmlFor="roleColorPicker">Role / Skills Text</label>
+            <input
+              type="color"
+              id="roleColorPicker"
+              value={roleColor}
+              onChange={e => onRoleColorChange(e.target.value)}
             />
           </div>
         </div>
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } } .spin { animation: spin 1s linear infinite; }`}</style>
+      {/* ── Section 6: Text Fields ── */}
+      <div className="cp-section">
+        <div className="cp-section-label">
+          <User size={13} />
+          Text Fields
+        </div>
+
+        <div className="text-fields">
+          <div className="field-group">
+            <label htmlFor="eventNameInput">Event Name</label>
+            <input
+              type="text"
+              id="eventNameInput"
+              value={eventName}
+              onChange={e => onEventNameChange(e.target.value)}
+              placeholder="e.g. Hacker House Goa"
+            />
+          </div>
+
+          <div className="cp-form-row">
+            <div className="field-group">
+              <label htmlFor="teamNameInput">Team Name</label>
+              <input
+                type="text"
+                id="teamNameInput"
+                value={teamName}
+                onChange={e => onTeamNameChange(e.target.value)}
+                placeholder="Team Name"
+              />
+            </div>
+            <div className="field-group">
+              <label htmlFor="memberNameInput">Member Name</label>
+              <input
+                type="text"
+                id="memberNameInput"
+                value={builderInfo.name}
+                onChange={e => onBuilderInfoChange({ ...builderInfo, name: e.target.value })}
+                placeholder="Full Name"
+              />
+            </div>
+          </div>
+
+          {/* Single Role vs Up to 5 Skills Toggle */}
+          <div className="field-group">
+            <label>Role / Skills Mode</label>
+            <div className="role-mode-toggle">
+              <button
+                type="button"
+                className={`btn-mode ${roleMode === 'single' ? 'active' : ''}`}
+                onClick={() => onRoleModeChange('single')}
+              >
+                Single Role
+              </button>
+              <button
+                type="button"
+                className={`btn-mode ${roleMode === 'skills' ? 'active' : ''}`}
+                onClick={() => onRoleModeChange('skills')}
+              >
+                Up to 5 Skills
+              </button>
+            </div>
+          </div>
+
+          {roleMode === 'single' ? (
+            <div className="field-group">
+              <label htmlFor="roleInput">Role Title</label>
+              <div className="cp-field-row">
+                <select
+                  className="cp-input cp-select"
+                  value={builderInfo.role}
+                  onChange={e => {
+                    const r = e.target.value;
+                    onBuilderInfoChange({
+                      ...builderInfo,
+                      role: r,
+                      title: getRandomTitle(r, builderInfo.title)
+                    });
+                  }}
+                  style={{ flex: 1, padding: "0.6rem 0.8rem" }}
+                >
+                  {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                </select>
+                <button className="cp-randomize-btn" type="button" onClick={shuffleTitle} title="Randomize Class">
+                  <Dices size={14}/> Auto-Class
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="field-group">
+              <label>Up to 5 Skills</label>
+              <div className="skills-inputs">
+                {skillsList.map((skill, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    className="skill-field"
+                    value={skill}
+                    placeholder={`Skill ${index + 1}`}
+                    onChange={e => {
+                      const updated = [...skillsList];
+                      updated[index] = e.target.value;
+                      onSkillsListChange(updated);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Section 7: Social Media Scanner ── */}
+      <div className="cp-section">
+        <div className="cp-section-label">
+          <AtSign size={13} />
+          Social Media (Back Side)
+        </div>
+        <div className="text-fields">
+          <div className="field-group">
+            <label htmlFor="socialPlatformSelect">Social Platform</label>
+            <select
+              id="socialPlatformSelect"
+              className="form-select"
+              value={socialPlatform}
+              onChange={e => onSocialPlatformChange(e.target.value)}
+            >
+              <option value="instagram">Instagram</option>
+              <option value="x">𝕏 / Twitter</option>
+              <option value="discord">Discord Invite</option>
+              <option value="custom">Custom URL / Link</option>
+            </select>
+          </div>
+          <div className="field-group">
+            <label htmlFor="socialHandleInput">Handle / URL</label>
+            <input
+              type="text"
+              id="socialHandleInput"
+              value={socialHandle}
+              onChange={e => onSocialHandleChange(e.target.value)}
+              placeholder="e.g. hacker_house_goa"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── Section 8: Actions ── */}
+      <div className="cp-section">
+        <div className="cp-section-label">
+          <Cpu size={13} />
+          Export Card
+        </div>
+        <div className="export-group">
+          <button className="btn btn-primary" type="button" onClick={() => onExportJpg(1)}>
+            Export JPEG 1×
+          </button>
+          <button className="btn btn-primary" type="button" onClick={() => onExportJpg(2)}>
+            Export JPEG 2×
+          </button>
+          <button className="btn btn-pdf-full" type="button" onClick={onExportPdf}>
+            Export Front & Back PDF (Single Go)
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spin { animation: spin 1s linear infinite; }
+      `}</style>
     </div>
   );
 };
+export default ControlPanel;

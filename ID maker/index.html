@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="ID Card Maker — Generate stunning ID cards with mood-based generative shapes, wiggly line overlays, and custom color palettes." />
+  <title>ID Card Maker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,900&family=Rozha+One&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <span class="header-logo">◆</span>
+        <h1 class="header-title">ID Card Maker</h1>
+      </div>
+      <p class="header-subtitle">ISO 7810 · Generative Design</p>
+    </header>
+
+    <!-- Editor -->
+    <main class="editor">
+
+      <!-- Canvas Preview -->
+      <section class="preview-panel" aria-label="Card Preview">
+        <div class="preview-toolbar">
+          <button class="btn btn-flip" id="flipCardBtn">
+            <span class="flip-icon">↺</span> Flip Card (<span id="flipSideText">FRONT</span>)
+          </button>
+        </div>
+        <div class="canvas-wrapper" id="canvasWrapper">
+          <canvas id="cardCanvas" width="900" height="1200"></canvas>
+        </div>
+        <div class="canvas-info">900 × 1200 px · 3:4 portrait</div>
+      </section>
+
+      <!-- Controls -->
+      <aside class="controls-panel" aria-label="Card Controls">
+
+        <!-- Upload Photo -->
+        <div class="control-section">
+          <h2 class="section-title"><span class="section-icon">📷</span> Portrait Photo</h2>
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="photoInput" accept="image/*" hidden />
+            <div class="upload-placeholder">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <path d="M21 15l-5-5L5 21" />
+              </svg>
+              <p>Drop image or click to upload</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mood -->
+        <div class="control-section">
+          <h2 class="section-title"><span class="section-icon">✦</span> Mood</h2>
+          <div class="mood-grid" id="moodGrid"></div>
+          <button class="btn btn-outline btn-sm" id="regenerateBtn">
+            <span class="btn-icon">↻</span> Regenerate Shapes
+          </button>
+        </div>
+
+        <!-- Palette -->
+        <div class="control-section">
+          <h2 class="section-title"><span class="section-icon">🎨</span> Color Palette</h2>
+          <div class="palette-grid" id="paletteGrid"></div>
+          <div class="custom-palette-toggle">
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('customPalette').classList.toggle('visible')">
+              ⚙ Custom Colors
+            </button>
+          </div>
+          <div class="custom-palette" id="customPalette"></div>
+          <div class="contrast-badge" id="contrastBadge"></div>
+        </div>
+
+        <!-- Color Effects -->
+        <div class="control-section">
+          <h2 class="section-title"><span class="section-icon">✨</span> Color Effects</h2>
+          <div class="toggle-group">
+            <label class="toggle-label" for="chromeToggle">
+              <input type="checkbox" id="chromeToggle" />
+              <span class="toggle-slider"></span>
+              <span class="toggle-text">
+                <strong class="toggle-title">Shiny Chrome Finish</strong>
+                <span class="toggle-subtitle">Metallic reflections & liquid chrome gradients</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Border & Role Colors -->
+        <div class="control-section">
+          <h2 class="section-title"><span class="section-icon">🔲</span> Border & Role Color</h2>
+          <div class="color-row">
+            <div class="color-picker-group">
+              <label for="borderColorPicker">Card Border</label>
+              <input type="color" id="borderColorPicker" value="#0077B6" />
+            </div>
+            <div class="color-picker-group">
+              <label for="roleColorPicker">Role / Skills Text</label>
+              <input type="color" id="roleColorPicker" value="#E63946" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Text Fields -->
+        <div class="control-section">
+          <h2 class="section-title"><span class="section-icon">✎</span> Text Fields</h2>
+          <div class="text-fields">
+            <div class="field-group">
+              <label for="eventNameInput">Event Name</label>
+              <input type="text" id="eventNameInput" placeholder="Hacker House Goa" />
+            </div>
+            <div class="field-row">
+              <div class="field-group field-half">
+                <label for="teamNameInput">Team Name</label>
+                <input type="text" id="teamNameInput" placeholder="Team Alpha" />
+              </div>
+              <div class="field-group field-half">
+                <label for="memberNameInput">Member Name</label>
+                <input type="text" id="memberNameInput" placeholder="John Doe" />
+              </div>
+            </div>
+
+            <!-- Single Role vs Up to 5 Skills Mode -->
+            <div class="field-group">
+              <label>Role / Skills Mode</label>
+              <div class="role-mode-toggle">
+                <button type="button" class="btn-mode active" id="modeSingleRole">Single Role</button>
+                <button type="button" class="btn-mode" id="modeMultiSkills">Up to 5 Skills</button>
+              </div>
+            </div>
+
+            <div id="singleRoleGroup" class="field-group">
+              <label for="roleInput">Role Title</label>
+              <input type="text" id="roleInput" placeholder="Developer | UI/UX" />
+            </div>
+
+            <div id="multiSkillsGroup" class="field-group hidden">
+              <label>Up to 5 Skills (continuous | text)</label>
+              <div class="skills-inputs">
+                <input type="text" id="skillInput1" class="skill-field" placeholder="Skill 1 (e.g. React)" value="React" />
+                <input type="text" id="skillInput2" class="skill-field" placeholder="Skill 2 (e.g. Node.js)" value="Node.js" />
+                <input type="text" id="skillInput3" class="skill-field" placeholder="Skill 3 (e.g. UI/UX)" value="UI/UX" />
+                <input type="text" id="skillInput4" class="skill-field" placeholder="Skill 4 (e.g. Python)" value="Python" />
+                <input type="text" id="skillInput5" class="skill-field" placeholder="Skill 5 (e.g. Docker)" value="Docker" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Social Media Scanner (Back Side) -->
+        <div class="control-section">
+          <h2 class="section-title"><span class="section-icon">📱</span> Social Media Scanner (Back Side)</h2>
+          <div class="text-fields">
+            <div class="field-group">
+              <label for="socialPlatformSelect">Social Media Platform</label>
+              <select id="socialPlatformSelect" class="form-select">
+                <option value="instagram">Instagram (@username)</option>
+                <option value="x">𝕏 / Twitter (@username)</option>
+                <option value="discord">Discord (Invite / Handle)</option>
+                <option value="custom">Custom Link / URL</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label for="socialHandleInput" id="socialHandleLabel">Instagram Handle</label>
+              <input type="text" id="socialHandleInput" placeholder="e.g. hacker_house_goa" value="hacker_house_goa" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Export (JPEG & Complete PDF in one go) -->
+        <div class="control-section actions-section">
+          <h2 class="section-title"><span class="section-icon">📥</span> Export</h2>
+          <div class="export-group">
+            <button class="btn btn-primary" id="exportJpg1x">
+              <span class="btn-icon">↓</span> Export JPEG 1×
+            </button>
+            <button class="btn btn-primary" id="exportJpg2x">
+              <span class="btn-icon">↓</span> Export JPEG 2×
+            </button>
+            <button class="btn btn-pdf-full" id="exportPdfBtn">
+              <span class="btn-icon">⎙</span> Export Front & Back PDF (Single Go)
+            </button>
+          </div>
+        </div>
+
+      </aside>
+    </main>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
