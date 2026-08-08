@@ -72,6 +72,15 @@ export interface PalettePreset {
 
 export type SocialPlatform = 'instagram' | 'x' | 'discord' | 'custom';
 
+export interface Charm {
+  emoji: string;
+  xPct: number;
+  yPct: number;
+  active: boolean;
+  size: number; // scale multiplier, e.g. 0.7 to 1.5
+  rotation?: number; // rotation in degrees, 0 to 360
+}
+
 export interface Shape {
   type: string;
   isOverlay: boolean;

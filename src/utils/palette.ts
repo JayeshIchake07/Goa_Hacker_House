@@ -148,3 +148,77 @@ export function getDefaultPalette(): PaletteColors {
 export function clonePalette(colors: PaletteColors): PaletteColors {
   return { ...colors };
 }
+
+/** Dynamically resolves bold/punchy dark colors if chrome is off and background is light. */
+export function getRenderPalette(palette: PaletteColors, useChrome: boolean): PaletteColors {
+  if (useChrome) return palette;
+
+  const { r, g, b } = hexToRgb(palette.background);
+  const lum = relativeLuminance({ r, g, b });
+
+  if (lum > 0.5) {
+    const bgLower = palette.background.toLowerCase();
+    if (bgLower === '#caf0f8') {
+      // Ocean bold
+      return {
+        primary: '#00B4D8',
+        secondary: '#90E0EF',
+        surface: 'rgba(5, 25, 45, 0.85)',
+        text: '#FFE500',
+        background: '#031D33'
+      };
+    }
+    if (bgLower === '#fff1e6') {
+      // Sunset bold
+      return {
+        primary: '#E76F51',
+        secondary: '#F4A261',
+        surface: 'rgba(40, 20, 10, 0.85)',
+        text: '#F4A261',
+        background: '#1A0B05'
+      };
+    }
+    if (bgLower === '#d8f3dc') {
+      // Forest bold
+      return {
+        primary: '#52B788',
+        secondary: '#74C69D',
+        surface: 'rgba(10, 35, 20, 0.85)',
+        text: '#D8F3DC',
+        background: '#041F10'
+      };
+    }
+    if (bgLower === '#f2f2f2') {
+      // Monochrome bold
+      return {
+        primary: '#E5E5E5',
+        secondary: '#A3A3A3',
+        surface: 'rgba(20, 20, 20, 0.85)',
+        text: '#F5F5F5',
+        background: '#121212'
+      };
+    }
+    if (bgLower === '#f1faee') {
+      // Coral bold
+      return {
+        primary: '#E63946',
+        secondary: '#F4A261',
+        surface: 'rgba(30, 10, 15, 0.85)',
+        text: '#FFE500',
+        background: '#1D030A'
+      };
+    }
+    if (bgLower === '#edf6f9') {
+      // Arctic bold
+      return {
+        primary: '#48CAE4',
+        secondary: '#ADE8F4',
+        surface: 'rgba(5, 30, 40, 0.85)',
+        text: '#E0FAFF',
+        background: '#021F28'
+      };
+    }
+  }
+
+  return palette;
+}

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import type { BuilderInfo, CropState, PaletteColors } from "../types";
+import type { BuilderInfo, CropState, PaletteColors, Charm } from "../types";
 import { INITIAL_CROP_STATE } from "../types";
 import { getRandomTitle, ROLES } from "../utils/roleTitles";
 import {
@@ -45,6 +45,12 @@ interface ControlPanelProps {
   shapeSeed: number;
   onShapeSeedChange: (n: number) => void;
 
+  charms: Charm[];
+  onCharmsChange: (charms: Charm[]) => void;
+
+  photoFrame: "rectangle" | "circle";
+  onPhotoFrameChange: (f: "rectangle" | "circle") => void;
+
   onExportJpg: (scale: number) => void;
   onExportPdf: () => void;
 }
@@ -63,8 +69,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   builderInfo,
   onBuilderInfoChange,
 
-  eventName,
-  onEventNameChange,
   teamName,
   onTeamNameChange,
   roleMode,
@@ -88,6 +92,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onUseChromeEffectChange,
   onShapeSeedChange,
 
+  charms,
+  onCharmsChange,
+
+  photoFrame,
+  onPhotoFrameChange,
+
   onExportJpg,
   onExportPdf,
 }) => {
@@ -96,7 +106,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showCustomPalette, setShowCustomPalette] = useState(false);
-  const [spinRegen, setSpinRegen] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [regenProgress, setRegenProgress] = useState(0);
+  const [regenText, setRegenText] = useState("Regenerate Shapes");
 
   // File processing
   const processFile = async (file: File) => {
@@ -133,11 +145,32 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     });
   };
 
-  // Regeneration of shapes
+  // Regeneration of shapes with anti-spam timer
   const handleRegenerateShapes = () => {
-    setSpinRegen(true);
+    if (isRegenerating) return;
+    setIsRegenerating(true);
+    setRegenText("Generating...");
+    setRegenProgress(0);
     onShapeSeedChange(Date.now());
-    setTimeout(() => setSpinRegen(false), 400);
+
+    const startTime = Date.now();
+    const duration = 2000;
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const pct = Math.min(100, (elapsed / duration) * 100);
+      setRegenProgress(pct);
+
+      if (elapsed >= duration) {
+        clearInterval(interval);
+        setRegenText("Changed!");
+        setIsRegenerating(false);
+        setTimeout(() => {
+          setRegenText("Regenerate Shapes");
+          setRegenProgress(0);
+        }, 1000);
+      }
+    }, 20);
   };
 
   // Custom palette color input updater
@@ -230,8 +263,29 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       <div className="cp-section">
         <div className="cp-section-label">
           <Sparkles size={13} />
-          Mood Shapes
+          Mood & Shapes
         </div>
+
+        <div className="field-group" style={{ marginBottom: "1.2rem" }}>
+          <label>Photo Frame Shape</label>
+          <div className="role-mode-toggle">
+            <button
+              type="button"
+              className={`btn-mode ${photoFrame === 'rectangle' ? 'active' : ''}`}
+              onClick={() => onPhotoFrameChange('rectangle')}
+            >
+              Rectangle
+            </button>
+            <button
+              type="button"
+              className={`btn-mode ${photoFrame === 'circle' ? 'active' : ''}`}
+              onClick={() => onPhotoFrameChange('circle')}
+            >
+              Circle
+            </button>
+          </div>
+        </div>
+
         <div className="mood-grid">
           {Object.entries(moodPresets).map(([key, item]) => (
             <button
@@ -246,12 +300,28 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           ))}
         </div>
         <button
-          className={`cp-quick-btn ${spinRegen ? "spin" : ""}`}
+          className="cp-quick-btn"
           type="button"
           onClick={handleRegenerateShapes}
-          style={{ width: "100%", padding: "0.6rem" }}
+          disabled={isRegenerating}
+          style={{
+            width: "100%",
+            padding: "0.6rem",
+            position: "relative",
+            overflow: "hidden",
+            background: isRegenerating 
+              ? `linear-gradient(to right, rgba(0, 240, 255, 0.25) ${regenProgress}%, rgba(255, 255, 255, 0.08) ${regenProgress}%)`
+              : "rgba(255, 255, 255, 0.08)",
+            border: "1px solid var(--panel-border)",
+            borderRadius: "var(--r-md)",
+            color: "#FFF",
+            cursor: isRegenerating ? "not-allowed" : "pointer",
+            transition: "background 0.1s ease"
+          }}
         >
-          <RefreshCw size={13} /> Regenerate Shapes
+          <span style={{ position: "relative", zIndex: 2, display: "flex", alignItems: "center", justifyContent: "center", gap: "6px" }}>
+            <RefreshCw size={13} className={isRegenerating ? "spin" : ""} /> {regenText}
+          </span>
         </button>
       </div>
 
@@ -372,16 +442,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
 
         <div className="text-fields">
-          <div className="field-group">
-            <label htmlFor="eventNameInput">Event Name</label>
-            <input
-              type="text"
-              id="eventNameInput"
-              value={eventName}
-              onChange={e => onEventNameChange(e.target.value)}
-              placeholder="e.g. Hacker House Goa"
-            />
-          </div>
 
           <div className="cp-form-row">
             <div className="field-group">
@@ -506,6 +566,106 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               placeholder="e.g. hacker_house_goa"
             />
           </div>
+        </div>
+      </div>
+
+      {/* ── Section 7.5: Charms System ✦ ── */}
+      <div className="cp-section">
+        <div className="cp-section-label">
+          <Sparkles size={13} />
+          Charms System ✦
+        </div>
+        <p className="preview-hint" style={{ marginBottom: "12px", textAlign: "left" }}>
+          Enable and drag stamps directly on the Card Preview to reposition them (valid outside header, name bar & photo area).
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          {charms.map((charm, index) => {
+            const presets = ["🌴", "⚡", "🚀", "🔥", "👾", "😎", "✨", "🧠"];
+            return (
+              <div key={index} style={{ background: "rgba(0,0,0,0.15)", padding: "10px", borderRadius: "8px", border: "1px solid var(--panel-border)" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>
+                    <input
+                      type="checkbox"
+                      checked={charm.active}
+                      onChange={e => {
+                        const updated = [...charms];
+                        updated[index] = { ...charm, active: e.target.checked };
+                        onCharmsChange(updated);
+                      }}
+                      style={{ cursor: "pointer", accentColor: "var(--accent-cyan)" }}
+                    />
+                    Charm badge {index + 1}
+                  </label>
+                  {charm.active && (
+                    <span style={{ fontSize: "1.1rem" }}>{charm.emoji}</span>
+                  )}
+                </div>
+                {charm.active && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                      {presets.map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          className="cp-preset-chip"
+                          style={{
+                            borderColor: charm.emoji === emoji ? "var(--accent-cyan)" : "",
+                            color: charm.emoji === emoji ? "var(--accent-cyan)" : "",
+                            padding: "0.2rem 0.5rem"
+                          }}
+                          onClick={() => {
+                            const updated = [...charms];
+                            updated[index] = { ...charm, emoji };
+                            onCharmsChange(updated);
+                          }}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="field-group">
+                      <input
+                        type="text"
+                        className="cp-input"
+                        placeholder="Custom emoji or symbol"
+                        maxLength={2}
+                        value={charm.emoji}
+                        onChange={e => {
+                          const updated = [...charms];
+                          updated[index] = { ...charm, emoji: e.target.value };
+                          onCharmsChange(updated);
+                        }}
+                        style={{ padding: "4px 8px", fontSize: "0.8rem" }}
+                      />
+                    </div>
+                    <div className="field-group" style={{ marginTop: "4px" }}>
+                      <label style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "rgba(255,255,255,0.5)", marginBottom: "4px" }}>
+                        <span>Badge Size (Stage {Math.round(charm.size || 1)}/5)</span>
+                        <span>{["Small", "Med-Small", "Medium", "Med-Large", "Large (1/7 ID)"][(Math.round(charm.size || 1)) - 1]}</span>
+                      </label>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <input
+                          type="range"
+                          min="1"
+                          max="5"
+                          step="1"
+                          value={Math.round(charm.size || 1)}
+                          onChange={e => {
+                            const updated = [...charms];
+                            updated[index] = { ...charm, size: parseInt(e.target.value, 10) };
+                            onCharmsChange(updated);
+                          }}
+                          className="range-slider"
+                          style={{ flex: 1 }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 

@@ -1,6 +1,6 @@
-import type { CropState, IdCardTemplate, PaletteColors, Shape } from "../types";
+import type { CropState, IdCardTemplate, PaletteColors, Shape, Charm } from "../types";
 import { idCardTemplate, getPortraitRect, getHeaderRect, getFooterRect } from "./template";
-import { hexToRgba } from "./palette";
+import { hexToRgba, getRenderPalette } from "./palette";
 import { drawQRCode } from "./qrcode";
 
 export interface IdMakerState {
@@ -26,6 +26,9 @@ export interface IdMakerState {
   shapeSeed: number;
   shapes: Shape[];
   template: IdCardTemplate;
+  charms: Charm[];
+  photoFrame?: 'rectangle' | 'circle';
+  studioLogoImage?: HTMLImageElement | null;
 }
 
 /* ── Drawing Helpers ────────────────────────────────────────── */
@@ -334,20 +337,39 @@ function renderPortrait(
   crop: CropState,
   template: IdCardTemplate,
   useChromeEffect = false,
-  lightPos: { x: number; y: number } | null = null
+  lightPos: { x: number; y: number } | null = null,
+  photoFrame?: 'rectangle' | 'circle'
 ) {
-  const pr = getPortraitRect(template);
+  const isCircleFrame = photoFrame === 'circle';
   const br = template.portrait.borderRadiusPx || 12;
+
+  // Circular frame is 520x520px (centered), rectangular frame is 414x475px (standard template)
+  const pr = isCircleFrame ? {
+    x: 190,
+    y: 327.5,
+    width: 520,
+    height: 520
+  } : getPortraitRect(template);
 
   // If Chrome effect is ON, apply dark shiny metallic frame around the image box
   if (useChromeEffect) {
     ctx.save();
-    ctx.strokeStyle = createChromeGradient(ctx, pr.x - 8, pr.y - 8, pr.width + 16, pr.height + 16, '#0077B6', lightPos);
-    ctx.lineWidth = 6;
-    ctx.shadowColor = 'rgba(248, 250, 252, 0.8)';
-    ctx.shadowBlur = 16;
-    roundRectPath(ctx, pr.x - 3, pr.y - 3, pr.width + 6, pr.height + 6, br + 3);
-    ctx.stroke();
+    if (isCircleFrame) {
+      ctx.strokeStyle = createChromeGradient(ctx, pr.x - 8, pr.y - 8, pr.width + 16, pr.height + 16, '#0077B6', lightPos);
+      ctx.lineWidth = 6;
+      ctx.shadowColor = 'rgba(248, 250, 252, 0.8)';
+      ctx.shadowBlur = 16;
+      ctx.beginPath();
+      ctx.arc(pr.x + pr.width / 2, pr.y + pr.height / 2, pr.width / 2 + 3, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      ctx.strokeStyle = createChromeGradient(ctx, pr.x - 8, pr.y - 8, pr.width + 16, pr.height + 16, '#0077B6', lightPos);
+      ctx.lineWidth = 6;
+      ctx.shadowColor = 'rgba(248, 250, 252, 0.8)';
+      ctx.shadowBlur = 16;
+      roundRectPath(ctx, pr.x - 3, pr.y - 3, pr.width + 6, pr.height + 6, br + 3);
+      ctx.stroke();
+    }
     ctx.restore();
   }
 
@@ -357,22 +379,41 @@ function renderPortrait(
     ctx.shadowColor = 'rgba(0,0,0,0.3)';
     ctx.shadowBlur = 24;
     ctx.shadowOffsetY = 8;
-    roundRectPath(ctx, pr.x, pr.y, pr.width, pr.height, br);
-    ctx.fillStyle = 'rgba(0,0,0,0.01)';
-    ctx.fill();
+    if (isCircleFrame) {
+      ctx.beginPath();
+      ctx.arc(pr.x + pr.width / 2, pr.y + pr.height / 2, pr.width / 2, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.01)';
+      ctx.fill();
+    } else {
+      roundRectPath(ctx, pr.x, pr.y, pr.width, pr.height, br);
+      ctx.fillStyle = 'rgba(0,0,0,0.01)';
+      ctx.fill();
+    }
     ctx.restore();
 
     // Draw portrait with crop values
     ctx.save();
-    roundRectPath(ctx, pr.x, pr.y, pr.width, pr.height, br);
-    ctx.clip();
+    if (isCircleFrame) {
+      ctx.beginPath();
+      ctx.arc(pr.x + pr.width / 2, pr.y + pr.height / 2, pr.width / 2, 0, Math.PI * 2);
+      ctx.clip();
+    } else {
+      roundRectPath(ctx, pr.x, pr.y, pr.width, pr.height, br);
+      ctx.clip();
+    }
     drawCroppedImage(ctx, portraitImage, pr.x + pr.width / 2, pr.y + pr.height / 2, pr.width, pr.height, crop);
     ctx.restore();
   } else {
     // Placeholder
     ctx.save();
-    roundRectPath(ctx, pr.x, pr.y, pr.width, pr.height, br);
-    ctx.clip();
+    if (isCircleFrame) {
+      ctx.beginPath();
+      ctx.arc(pr.x + pr.width / 2, pr.y + pr.height / 2, pr.width / 2, 0, Math.PI * 2);
+      ctx.clip();
+    } else {
+      roundRectPath(ctx, pr.x, pr.y, pr.width, pr.height, br);
+      ctx.clip();
+    }
     ctx.fillStyle = 'rgba(128,128,128,0.06)';
     ctx.fillRect(pr.x, pr.y, pr.width, pr.height);
 
@@ -380,8 +421,14 @@ function renderPortrait(
     ctx.setLineDash([8, 6]);
     ctx.strokeStyle = 'rgba(128,128,128,0.2)';
     ctx.lineWidth = 2;
-    roundRectPath(ctx, pr.x + 4, pr.y + 4, pr.width - 8, pr.height - 8, br - 2);
-    ctx.stroke();
+    if (isCircleFrame) {
+      ctx.beginPath();
+      ctx.arc(pr.x + pr.width / 2, pr.y + pr.height / 2, pr.width / 2 - 4, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      roundRectPath(ctx, pr.x + 4, pr.y + 4, pr.width - 8, pr.height - 8, br - 2);
+      ctx.stroke();
+    }
     ctx.setLineDash([]);
 
     // Silhouette
@@ -458,7 +505,7 @@ function renderOverlayShapes(
 }
 
 /** 6. Header strip — 3/4 height glassy logo (+25% size), green shadow glow, translucent glass panel. */
-function renderHeader(ctx: CanvasRenderingContext2D, _palette: PaletteColors, textFields: Record<string, string>, template: IdCardTemplate) {
+function renderHeader(ctx: CanvasRenderingContext2D, _palette: PaletteColors, _textFields: Record<string, string>, template: IdCardTemplate) {
   const { widthPx: w, heightPx: h } = template.canvas;
   const hr = getHeaderRect(template);
 
@@ -507,12 +554,12 @@ function renderHeader(ctx: CanvasRenderingContext2D, _palette: PaletteColors, te
   const cy = panelY + panelH * 0.50;
 
   ctx.save();
-  ctx.font = '900 58px "Playfair Display", serif';
+  ctx.font = '900 72px "Playfair Display", serif';
 
   const hackerW = ctx.measureText('HACKER').width;
   const houseW = ctx.measureText('HOUSE').width;
-  const badgeW = 96;
-  const gap = 20;
+  const badgeW = 120;
+  const gap = 24;
   const totalW = hackerW + gap + badgeW + gap + houseW;
   const startX = panelCX - totalW / 2;
 
@@ -527,13 +574,13 @@ function renderHeader(ctx: CanvasRenderingContext2D, _palette: PaletteColors, te
   ctx.textBaseline = 'middle';
   ctx.fillText('HACKER', startX, cy);
 
-  // Draw rotated Hot Pink (गोवा) Badge (+25% size)
+  // Draw rotated Hot Pink (गोवा) Badge (scaled to match)
   const badgeCenterX = startX + hackerW + gap + badgeW / 2;
   ctx.save();
   ctx.translate(badgeCenterX, cy);
   ctx.rotate((-6 * Math.PI) / 180); // Rotated -6deg
 
-  roundRectPath(ctx, -48, -25, 96, 50, 25);
+  roundRectPath(ctx, -60, -31, 120, 62, 31);
   ctx.fillStyle = '#FF007A'; // Hot Pink / Magenta
   ctx.shadowColor = 'rgba(255, 0, 122, 0.8)';
   ctx.shadowBlur = 18;
@@ -543,7 +590,7 @@ function renderHeader(ctx: CanvasRenderingContext2D, _palette: PaletteColors, te
   ctx.stroke();
 
   ctx.fillStyle = '#FFE500';
-  ctx.font = '900 24px "Rozha One", "Playfair Display", serif';
+  ctx.font = '900 30px "Rozha One", "Playfair Display", serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.shadowBlur = 0;
@@ -558,18 +605,6 @@ function renderHeader(ctx: CanvasRenderingContext2D, _palette: PaletteColors, te
   ctx.fillText('HOUSE', houseX, cy);
   ctx.restore();
 
-  // Centered Subtitle line at bottom of header panel
-  ctx.save();
-  ctx.font = '700 15px Inter, monospace';
-  ctx.fillStyle = '#A7F3D0';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'bottom';
-  ctx.shadowColor = 'rgba(34, 197, 94, 0.6)';
-  ctx.shadowBlur = 10;
-  const eventText = textFields.eventName || 'HACKER HOUSE GOA';
-  ctx.fillText(eventText.toUpperCase(), panelCX, panelY + panelH - 12);
-  ctx.restore();
-
   ctx.restore();
 }
 
@@ -580,7 +615,22 @@ function truncate20(str: string, maxLen = 20): string {
 }
 
 /** 7. Footer strip — expanded glassy panel (+25% text sizes), centered Team, Member, and Skills. */
-function renderFooter(ctx: CanvasRenderingContext2D, palette: PaletteColors, textFields: Record<string, string>, roleColor: string, template: IdCardTemplate) {
+/** Helper to draw a four-pointed golden sparkle star. */
+function drawSparkle(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number, color = '#FFE500') {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - size);
+  ctx.quadraticCurveTo(cx, cy, cx + size, cy);
+  ctx.quadraticCurveTo(cx, cy, cx, cy + size);
+  ctx.quadraticCurveTo(cx, cy, cx - size, cy);
+  ctx.quadraticCurveTo(cx, cy, cx, cy - size);
+  ctx.fill();
+  ctx.restore();
+}
+
+/** 7. Footer strip — expanded glassy panel (+25% text sizes), centered Team, Member, and Skills. */
+function renderFooter(ctx: CanvasRenderingContext2D, _palette: PaletteColors, textFields: Record<string, string>, _roleColor: string, template: IdCardTemplate) {
   const { widthPx: w, heightPx: h } = template.canvas;
   const fr = getFooterRect(template);
 
@@ -610,43 +660,8 @@ function renderFooter(ctx: CanvasRenderingContext2D, palette: PaletteColors, tex
   ctx.stroke();
   ctx.restore();
 
-  // Line 1: Team Name (Top, centered, big 30px Playfair Display title)
   const rawTeam = truncate20(textFields.teamName || 'Team Alpha', 20);
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = '900 30px "Playfair Display", serif';
-  ctx.fillStyle = '#FFE500'; // Vibrant Sun Yellow
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-  ctx.shadowBlur = 10;
-
-  let teamFontSize = 30;
-  while (ctx.measureText(rawTeam).width > panelW - 56 && teamFontSize > 20) {
-    teamFontSize -= 2;
-    ctx.font = `900 ${teamFontSize}px "Playfair Display", serif`;
-  }
-  ctx.fillText(rawTeam, panelCX, panelY + panelH * 0.25);
-  ctx.restore();
-
-  // Line 2: Member Name (Middle, centered, large bold 38px Inter font)
   const rawMember = truncate20(textFields.memberName || 'John Doe', 20);
-  ctx.save();
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = '800 38px Inter, system-ui, sans-serif';
-  ctx.fillStyle = palette.text;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.35)';
-  ctx.shadowBlur = 10;
-
-  let memberFontSize = 38;
-  while (ctx.measureText(rawMember).width > panelW - 56 && memberFontSize > 22) {
-    memberFontSize -= 2;
-    ctx.font = `800 ${memberFontSize}px Inter, system-ui, sans-serif`;
-  }
-  ctx.fillText(rawMember, panelCX, panelY + panelH * 0.56);
-  ctx.restore();
-
-  // Line 3: Skills / Role separated by " | " (Bottom, centered, 20px font)
   const rawRole = textFields.role || 'Developer | UI/UX';
   const formattedSkills = rawRole
     .split(/[,|]/)
@@ -654,20 +669,101 @@ function renderFooter(ctx: CanvasRenderingContext2D, palette: PaletteColors, tex
     .filter(Boolean)
     .join('  |  ');
 
+  // Name Box Configuration (Background matching Header Green)
+  const boxW = 600;
+  const boxH = 76;
+  const boxX = panelCX - boxW / 2;
+  const boxY = 960 + 65; // 1025
+  const headerGreen = 'rgba(4, 47, 46, 0.95)'; // Exact matching header emerald green
+
+  // 1. Draw Name Box
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 4;
+
+  roundRectPath(ctx, boxX, boxY, boxW, boxH, 18);
+  ctx.fillStyle = headerGreen;
+  ctx.fill();
+
+  ctx.strokeStyle = '#FFFDEB'; // Cream border to match text
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  ctx.restore();
+
+  // 2. Draw Left & Right Sparkles (Stars) inside the box in cream color
+  drawSparkle(ctx, boxX + 35, boxY + boxH / 2, 12, '#FFFDEB');
+  drawSparkle(ctx, boxX + boxW - 35, boxY + boxH / 2, 12, '#FFFDEB');
+
+  // 3. Draw Centered Member Name inside the box in Cream
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = '600 20px Inter, monospace';
-  ctx.fillStyle = roleColor || palette.secondary;
-  ctx.shadowColor = 'rgba(34, 197, 94, 0.65)';
-  ctx.shadowBlur = 12;
+  ctx.font = '800 38px Inter, system-ui, sans-serif';
+  ctx.fillStyle = '#FFFDEB'; // Soft cream color
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+  ctx.shadowBlur = 8;
 
-  let skillFontSize = 20;
-  while (ctx.measureText(formattedSkills).width > panelW - 44 && skillFontSize > 14) {
-    skillFontSize -= 1;
-    ctx.font = `600 ${skillFontSize}px Inter, monospace`;
+  let memberFontSize = 38;
+  while (ctx.measureText(rawMember).width > boxW - 120 && memberFontSize > 22) {
+    memberFontSize -= 2;
+    ctx.font = `800 ${memberFontSize}px Inter, system-ui, sans-serif`;
   }
-  ctx.fillText(formattedSkills, panelCX, panelY + panelH * 0.82);
+  ctx.fillText(rawMember, panelCX, boxY + boxH / 2);
+  ctx.restore();
+
+  // 4. Draw Left-aligned Team Name text just above the name box
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'bottom';
+  ctx.font = '800 32px Inter, monospace';
+  ctx.fillStyle = '#FFE500'; // Gold text
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 8;
+
+  let teamFontSize = 32;
+  while (ctx.measureText(rawTeam).width > boxW && teamFontSize > 18) {
+    teamFontSize -= 1;
+    ctx.font = `800 ${teamFontSize}px Inter, monospace`;
+  }
+  ctx.fillText(rawTeam, boxX + 4, boxY - 10);
+  ctx.restore();
+
+  // 5. Draw Cream Box for Role / Skills content
+  const roleBoxW = 460;
+  const roleBoxH = 52;
+  const roleBoxX = panelCX - roleBoxW / 2;
+  const roleBoxY = boxY + boxH + 18; // 1119
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.2)';
+  ctx.shadowBlur = 8;
+  ctx.shadowOffsetY = 2;
+
+  roundRectPath(ctx, roleBoxX, roleBoxY, roleBoxW, roleBoxH, 12);
+  ctx.fillStyle = '#FFFDEB'; // Cream background
+  ctx.fill();
+
+  ctx.strokeStyle = headerGreen; // Green border matching header green
+  ctx.lineWidth = 2.0;
+  ctx.stroke();
+  ctx.restore();
+
+  // 6. Draw Centered Role / Skills text inside the cream box in Header Green
+  ctx.save();
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '700 18px Inter, monospace';
+  ctx.fillStyle = 'rgba(4, 47, 46, 0.95)'; // Green text color
+  ctx.shadowColor = 'rgba(255, 255, 255, 0.4)';
+  ctx.shadowBlur = 4;
+
+  let skillFontSize = 18;
+  while (ctx.measureText(formattedSkills).width > roleBoxW - 44 && skillFontSize > 13) {
+    skillFontSize -= 1;
+    ctx.font = `700 ${skillFontSize}px Inter, monospace`;
+  }
+  ctx.fillText(formattedSkills, panelCX, roleBoxY + roleBoxH / 2);
   ctx.restore();
 
   ctx.restore();
@@ -697,9 +793,11 @@ function renderBorder(ctx: CanvasRenderingContext2D, borderColor: string, templa
 export function renderCardBack(ctx: CanvasRenderingContext2D, state: IdMakerState) {
   const template = state.template || idCardTemplate;
   const {
-    palette, shapes, textFields, borderColor,
+    palette: rawPalette, shapes, textFields, borderColor,
     useChromeEffect, lightPos, socialPlatform, socialHandle
   } = state;
+
+  const palette = getRenderPalette(rawPalette, useChromeEffect);
 
   // 1. Background
   renderBackground(ctx, palette, template);
@@ -816,6 +914,39 @@ export function renderCardBack(ctx: CanvasRenderingContext2D, state: IdMakerStat
   renderBorder(ctx, borderColor, template, useChromeEffect, lightPos);
 }
 
+/** Draw stamps/badges as glassy circular pins on the card. */
+function renderCharms(ctx: CanvasRenderingContext2D, charms: Charm[], template: IdCardTemplate) {
+  if (!charms || charms.length === 0) return;
+  const w = template.canvas.widthPx;
+  const h = template.canvas.heightPx;
+
+  for (const charm of charms) {
+    if (!charm.active) continue;
+    const cx = (charm.xPct / 100) * w;
+    const cy = (charm.yPct / 100) * h;
+
+    // Draw Emoji directly with a text drop shadow and rotation
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate((charm.rotation || 0) * Math.PI / 180);
+
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 4;
+    
+    // Five size stages: max size (stage 5) is 128px (exactly 1/7 of card 900px width)
+    const fontSizes = [46, 66, 86, 106, 128];
+    const stage = Math.max(1, Math.min(5, Math.round(charm.size || 1)));
+    const finalFontSize = fontSizes[stage - 1];
+
+    ctx.font = `${finalFontSize}px Inter, system-ui, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(charm.emoji, 0, 0);
+    ctx.restore();
+  }
+}
+
 /**
  * Renders the complete ID card (Front or Back).
  */
@@ -827,9 +958,11 @@ export function renderCard(ctx: CanvasRenderingContext2D, state: IdMakerState) {
 
   const template = state.template || idCardTemplate;
   const {
-    palette, shapes, portraitImage, crop,
-    textFields, borderColor, roleColor, useChromeEffect, lightPos
+    palette: rawPalette, shapes, portraitImage, crop,
+    textFields, borderColor, roleColor, useChromeEffect, lightPos, charms, photoFrame
   } = state;
+
+  const palette = getRenderPalette(rawPalette, useChromeEffect);
 
   // 1. Background
   renderBackground(ctx, palette, template);
@@ -846,10 +979,18 @@ export function renderCard(ctx: CanvasRenderingContext2D, state: IdMakerState) {
   renderBgShapes(ctx, shapes, palette, template, useChromeEffect, lightPos);
 
   // 4. Portrait (with Chrome box frame if enabled and crop parameters)
-  renderPortrait(ctx, portraitImage, crop, template, useChromeEffect, lightPos);
+  renderPortrait(ctx, portraitImage, crop, template, useChromeEffect, lightPos, photoFrame);
 
   // 5. Overlay shapes — wiggly lines ABOVE portrait
   renderOverlayShapes(ctx, shapes, template, useChromeEffect, lightPos);
+
+  // 5.5 Charms badges on front side
+  renderCharms(ctx, charms, template);
+
+  // 5.8 Custom "2:47PM STUDIO" hand-drawn logo at the top right below the header
+  if (state.studioLogoImage) {
+    drawChromaKeyedImage(ctx, state.studioLogoImage, 690, 240, 185, 115);
+  }
 
   // 6. Header strip
   renderHeader(ctx, palette, textFields || {}, template);
@@ -862,3 +1003,48 @@ export function renderCard(ctx: CanvasRenderingContext2D, state: IdMakerState) {
   // 8. Border (outside the clip)
   renderBorder(ctx, borderColor, template, useChromeEffect, lightPos);
 }
+
+/** Extracts the yellow text logo by green chroma-keying its background canvas pixels. */
+function drawChromaKeyedImage(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+) {
+  try {
+    const offscreen = document.createElement('canvas');
+    offscreen.width = img.naturalWidth || img.width || 300;
+    offscreen.height = img.naturalHeight || img.height || 200;
+    const octx = offscreen.getContext('2d');
+    if (!octx) {
+      ctx.drawImage(img, x, y, width, height);
+      return;
+    }
+
+    octx.drawImage(img, 0, 0, offscreen.width, offscreen.height);
+
+    const imgData = octx.getImageData(0, 0, offscreen.width, offscreen.height);
+    const data = imgData.data;
+
+    // Remove the rich forest green background (#006736) dynamically
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      
+      // Saturated green filter bounds
+      if (g > 60 && g > r * 1.4 && g > b * 1.4) {
+        data[i + 3] = 0; // key to transparent
+      }
+    }
+
+    octx.putImageData(imgData, 0, 0);
+    ctx.drawImage(offscreen, x, y, width, height);
+  } catch (e) {
+    // Fallback directly to image draw if CORS or canvas reads fail
+    ctx.drawImage(img, x, y, width, height);
+  }
+}
+

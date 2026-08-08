@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Header } from "./components/Header";
 import { ControlPanel } from "./components/ControlPanel";
 import { PreviewPanel } from "./components/PreviewPanel";
 import { Background3D } from "./components/Background3D";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { INITIAL_CROP_STATE } from "./types";
-import type { BuilderInfo, CropState, FormatMode, PaletteColors } from "./types";
+import type { BuilderInfo, CropState, FormatMode, PaletteColors, Charm } from "./types";
 import { getDefaultPalette } from "./utils/palette";
 import { getSoftExclusionZone } from "./utils/template";
 import { idCardTemplate } from "./utils/template";
@@ -47,6 +47,22 @@ function AppContent() {
   const [useChromeEffect, setUseChromeEffect] = useState<boolean>(false);
   const [shapeSeed, setShapeSeed]     = useState<number>(Date.now());
   const [lightPos, setLightPos]       = useState<{ x: number; y: number }>({ x: 0.5, y: 0.3 });
+  const [photoFrame, setPhotoFrame]   = useState<'rectangle' | 'circle'>('rectangle');
+
+  const [studioLogo, setStudioLogo]   = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => setStudioLogo(img);
+    img.src = "/studio-logo.png";
+  }, []);
+
+  // Emojis charms state (Up to 3 stamps)
+  const [charms, setCharms] = useState<Charm[]>([
+    { emoji: "🌴", xPct: 15, yPct: 50, active: false, size: 1, rotation: 0 },
+    { emoji: "⚡", xPct: 85, yPct: 50, active: false, size: 1, rotation: 0 },
+    { emoji: "🚀", xPct: 15, yPct: 75, active: false, size: 1, rotation: 0 },
+  ]);
 
   // Generate background/overlay shapes reactively using memoization
   const shapes = useMemo(() => {
@@ -89,13 +105,16 @@ function AppContent() {
       lightPos,
       shapeSeed,
       shapes,
-      template: idCardTemplate
+      template: idCardTemplate,
+      charms,
+      photoFrame,
+      studioLogoImage: studioLogo
     };
   }, [
     palette, mood, crop, mode, roleMode, skillsList,
     socialPlatform, socialHandle, textFields,
     borderColor, roleColor, useChromeEffect, lightPos,
-    shapeSeed, shapes
+    shapeSeed, shapes, charms, photoFrame, studioLogo
   ]);
 
   const handleImageSelected = (dataUrl: string) => {
@@ -175,6 +194,12 @@ function AppContent() {
             shapeSeed={shapeSeed}
             onShapeSeedChange={setShapeSeed}
 
+            charms={charms}
+            onCharmsChange={setCharms}
+
+            photoFrame={photoFrame}
+            onPhotoFrameChange={setPhotoFrame}
+
             onExportJpg={triggerExportJpg}
             onExportPdf={triggerExportPdf}
           />
@@ -203,6 +228,15 @@ function AppContent() {
             shapeSeed={shapeSeed}
             lightPos={lightPos}
             onLightPosChange={setLightPos}
+
+            charms={charms}
+            onCharmsChange={setCharms}
+
+            onBuilderInfoChange={setBuilderInfo}
+            onTeamNameChange={setTeamName}
+            onSkillsListChange={setSkillsList}
+
+            photoFrame={photoFrame}
 
             onExportJpg={triggerExportJpg}
             onExportPdf={triggerExportPdf}

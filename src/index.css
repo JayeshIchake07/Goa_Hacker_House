@@ -418,6 +418,30 @@ html, body {
   -webkit-backdrop-filter: blur(20px);
 }
 
+@media (min-width: 1025px) {
+  .control-panel {
+    max-height: calc(100vh - 7rem);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Sleek glassmorphic scrollbar styling */
+  .control-panel::-webkit-scrollbar {
+    width: 6px;
+  }
+  .control-panel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+  }
+  .control-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+  }
+  .control-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
 /* Format tabs at the top */
 .cp-tabs {
   display: grid;
