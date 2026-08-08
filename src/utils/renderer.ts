@@ -535,20 +535,7 @@ function renderHeader(ctx: CanvasRenderingContext2D, _palette: PaletteColors, _t
   ctx.stroke();
   ctx.restore();
 
-  // Micro header tags (top left & top right)
-  ctx.save();
-  ctx.font = '600 14px monospace';
-  ctx.fillStyle = '#A7F3D0';
-  ctx.textBaseline = 'top';
 
-  // Left tag
-  ctx.textAlign = 'left';
-  ctx.fillText('>_ task #01 — builder id generator', panelX + 24, panelY + 14);
-
-  // Right tag
-  ctx.textAlign = 'right';
-  ctx.fillText('2:47PM STUDIO ☾', panelX + panelW - 24, panelY + 14);
-  ctx.restore();
 
   // Centered main logo: HACKER [गोवा] HOUSE (+25% text size)
   const cy = panelY + panelH * 0.50;
