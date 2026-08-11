@@ -8,6 +8,7 @@ import {
   Settings, Palette, Dices, AlertTriangle, Check
 } from "lucide-react";
 import { convertHeicToJpeg, isHeicFile, readFileAsDataURL } from "../utils/heic";
+import { assertHasHumanFace } from "../utils/faceCheck";
 import { palettePresets, getContrastRatio, meetsWCAG } from "../utils/palette";
 import { moodPresets } from "../utils/moods";
 
@@ -104,6 +105,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDrag, setIsDrag] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingLabel, setLoadingLabel] = useState("Processing…");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showCustomPalette, setShowCustomPalette] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -114,14 +116,18 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   const processFile = async (file: File) => {
     setErrorMsg(null);
     setIsLoading(true);
+    setLoadingLabel("Processing…");
     try {
       const blob = isHeicFile(file) ? await convertHeicToJpeg(file) : file;
       const url = await readFileAsDataURL(blob);
+      setLoadingLabel("Checking photo…");
+      await assertHasHumanFace(url);
       onImageSelected(url);
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Failed to process photo.");
     } finally {
       setIsLoading(false);
+      setLoadingLabel("Processing…");
     }
   };
 
@@ -211,7 +217,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           onClick={() => fileInputRef.current?.click()}
         >
           {isLoading
-            ? <><Loader2 size={18} className="spin" /> Processing…</>
+            ? <><Loader2 size={18} className="spin" /> {loadingLabel}</>
             : <><Upload size={18} /> {imageSrc ? "Change Photo" : "Upload Photo (Supports HEIC / iPhone)"}</>
           }
         </div>
