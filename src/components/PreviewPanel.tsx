@@ -38,6 +38,7 @@ interface PreviewPanelProps {
   onSkillsListChange: (list: string[]) => void;
 
   photoFrame: "rectangle" | "circle";
+  useThemeBg: boolean;
 
   onExportJpg: (scale: number) => void;
   onExportPdf: () => void;
@@ -75,6 +76,8 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   onSkillsListChange,
 
   photoFrame,
+
+  useThemeBg,
 
   onExportJpg,
   onExportPdf,
@@ -180,13 +183,14 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
       template: idCardTemplate,
       charms,
       photoFrame,
-      studioLogoImage: studioLogoImg
+      studioLogoImage: studioLogoImg,
+      useThemeBg,
     };
   }, [
     palette, mood, loadedImg, crop, mode, roleMode, skillsList,
     socialPlatform, socialHandle, textFields,
     borderColor, roleColor, useChromeEffect, lightPos,
-    shapeSeed, shapes, charms, photoFrame, studioLogoImg
+    shapeSeed, shapes, charms, photoFrame, studioLogoImg, useThemeBg
   ]);
 
   // Redraw on any state change

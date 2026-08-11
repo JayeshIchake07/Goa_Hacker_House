@@ -9,12 +9,14 @@ import {
 } from "lucide-react";
 import { convertHeicToJpeg, isHeicFile, readFileAsDataURL } from "../utils/heic";
 import { assertHasHumanFace } from "../utils/faceCheck";
+import { removeImageBackground } from "../utils/removeBackground";
 import { palettePresets, getContrastRatio, meetsWCAG } from "../utils/palette";
 import { moodPresets } from "../utils/moods";
 
 interface ControlPanelProps {
   imageSrc: string | null;
-  onImageSelected: (dataUrl: string) => void;
+  cutoutSrc: string | null;
+  onImageSelected: (originalUrl: string, cutoutUrl: string | null) => void;
   crop: CropState;
   onCropChange: (c: CropState) => void;
   builderInfo: BuilderInfo;
@@ -52,6 +54,9 @@ interface ControlPanelProps {
   photoFrame: "rectangle" | "circle";
   onPhotoFrameChange: (f: "rectangle" | "circle") => void;
 
+  useThemeBg: boolean;
+  onUseThemeBgChange: (b: boolean) => void;
+
   onExportJpg: (scale: number) => void;
   onExportPdf: () => void;
 }
@@ -64,6 +69,7 @@ const PRESETS = [
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
   imageSrc,
+  cutoutSrc,
   onImageSelected,
   crop,
   onCropChange,
@@ -99,6 +105,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   photoFrame,
   onPhotoFrameChange,
 
+  useThemeBg,
+  onUseThemeBgChange,
+
   onExportJpg,
   onExportPdf,
 }) => {
@@ -122,7 +131,19 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       const url = await readFileAsDataURL(blob);
       setLoadingLabel("Checking photo…");
       await assertHasHumanFace(url);
-      onImageSelected(url);
+
+      setLoadingLabel("Removing background…");
+      try {
+        const cutout = await removeImageBackground(url);
+        onImageSelected(url, cutout);
+      } catch (bgErr) {
+        onImageSelected(url, null);
+        setErrorMsg(
+          bgErr instanceof Error
+            ? `${bgErr.message} Using original photo.`
+            : "Could not remove background. Using original photo."
+        );
+      }
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Failed to process photo.");
     } finally {
@@ -222,6 +243,28 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           }
         </div>
         {errorMsg && <p className="cp-error">{errorMsg}</p>}
+
+        {imageSrc && (
+          <div className="toggle-group" style={{ marginTop: "0.75rem" }}>
+            <label className="toggle-label" htmlFor="themeBgToggle">
+              <input
+                type="checkbox"
+                id="themeBgToggle"
+                checked={useThemeBg && !!cutoutSrc}
+                disabled={!cutoutSrc}
+                onChange={e => onUseThemeBgChange(e.target.checked)}
+              />
+              <span className="toggle-text">
+                <strong className="toggle-title">Theme background</strong>
+                <span className="toggle-subtitle">
+                  {cutoutSrc
+                    ? "Replace photo background with palette / mood colors"
+                    : "Unavailable — background removal failed for this photo"}
+                </span>
+              </span>
+            </label>
+          </div>
+        )}
 
         <div className="cp-presets">
           {PRESETS.map(p => (

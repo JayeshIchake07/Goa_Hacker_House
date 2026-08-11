@@ -17,6 +17,8 @@ function AppContent() {
 
   // Photo state
   const [imageSrc, setImageSrc]       = useState<string | null>(null);
+  const [cutoutSrc, setCutoutSrc]     = useState<string | null>(null);
+  const [useThemeBg, setUseThemeBg]   = useState<boolean>(true);
   const [crop, setCrop]               = useState<CropState>(INITIAL_CROP_STATE);
 
   // Card side (front or back)
@@ -108,45 +110,60 @@ function AppContent() {
       template: idCardTemplate,
       charms,
       photoFrame,
-      studioLogoImage: studioLogo
+      studioLogoImage: studioLogo,
+      useThemeBg: useThemeBg && !!cutoutSrc,
     };
   }, [
     palette, mood, crop, mode, roleMode, skillsList,
     socialPlatform, socialHandle, textFields,
     borderColor, roleColor, useChromeEffect, lightPos,
-    shapeSeed, shapes, charms, photoFrame, studioLogo
+    shapeSeed, shapes, charms, photoFrame, studioLogo,
+    useThemeBg, cutoutSrc
   ]);
 
-  const handleImageSelected = (dataUrl: string) => {
-    setImageSrc(dataUrl);
+  const activePortraitSrc =
+    useThemeBg && cutoutSrc ? cutoutSrc : imageSrc;
+
+  const handleImageSelected = (originalUrl: string, cutoutUrl: string | null) => {
+    setImageSrc(originalUrl);
+    setCutoutSrc(cutoutUrl);
+    setUseThemeBg(!!cutoutUrl);
     setCrop(INITIAL_CROP_STATE);
   };
 
   const triggerExportJpg = (scale: number) => {
     // We need to resolve the image source to an HTMLImageElement
-    if (!imageSrc) {
+    if (!activePortraitSrc) {
       exportJPG(rendererState, scale);
       return;
     }
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      exportJPG({ ...rendererState, portraitImage: img }, scale);
+      exportJPG({
+        ...rendererState,
+        portraitImage: img,
+        useThemeBg: useThemeBg && !!cutoutSrc,
+      }, scale);
     };
-    img.src = imageSrc;
+    img.src = activePortraitSrc;
   };
 
   const triggerExportPdf = () => {
-    if (!imageSrc) {
+    if (!activePortraitSrc) {
       exportPDF(rendererState);
       return;
     }
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
-      exportPDF({ ...rendererState, portraitImage: img });
+      exportPDF({
+        ...rendererState,
+        portraitImage: img,
+        useThemeBg: useThemeBg && !!cutoutSrc,
+      });
     };
-    img.src = imageSrc;
+    img.src = activePortraitSrc;
   };
 
   return (
@@ -162,6 +179,7 @@ function AppContent() {
           {/* LEFT — Control Panel */}
           <ControlPanel
             imageSrc={imageSrc}
+            cutoutSrc={cutoutSrc}
             onImageSelected={handleImageSelected}
             crop={crop}
             onCropChange={setCrop}
@@ -200,13 +218,16 @@ function AppContent() {
             photoFrame={photoFrame}
             onPhotoFrameChange={setPhotoFrame}
 
+            useThemeBg={useThemeBg}
+            onUseThemeBgChange={setUseThemeBg}
+
             onExportJpg={triggerExportJpg}
             onExportPdf={triggerExportPdf}
           />
 
           {/* RIGHT — Live Preview */}
           <PreviewPanel
-            imageSrc={imageSrc}
+            imageSrc={activePortraitSrc}
             mode={mode}
             onModeChange={setMode}
             crop={crop}
@@ -237,6 +258,7 @@ function AppContent() {
             onSkillsListChange={setSkillsList}
 
             photoFrame={photoFrame}
+            useThemeBg={useThemeBg && !!cutoutSrc}
 
             onExportJpg={triggerExportJpg}
             onExportPdf={triggerExportPdf}

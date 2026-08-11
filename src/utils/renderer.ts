@@ -2,6 +2,7 @@ import type { CropState, IdCardTemplate, PaletteColors, Shape, Charm } from "../
 import { idCardTemplate, getPortraitRect, getHeaderRect, getFooterRect } from "./template";
 import { hexToRgba, getRenderPalette } from "./palette";
 import { drawQRCode } from "./qrcode";
+import { createPortraitThemeFill } from "./removeBackground";
 
 export interface IdMakerState {
   palette: PaletteColors;
@@ -29,6 +30,7 @@ export interface IdMakerState {
   charms: Charm[];
   photoFrame?: 'rectangle' | 'circle';
   studioLogoImage?: HTMLImageElement | null;
+  useThemeBg?: boolean;
 }
 
 /* ── Drawing Helpers ────────────────────────────────────────── */
@@ -84,6 +86,84 @@ function drawCroppedImage(
 
   ctx.drawImage(img, -drawW / 2, -drawH / 2, drawW, drawH);
   ctx.restore();
+}
+
+/** Colorized silhouette of the cutout at the same crop transform (for outline rings). */
+function makeCroppedSilhouetteCanvas(
+  img: HTMLImageElement,
+  boxW: number,
+  boxH: number,
+  crop: CropState,
+  color: string
+): HTMLCanvasElement | null {
+  const pad = 28;
+  const tw = Math.ceil(boxW + pad * 2);
+  const th = Math.ceil(boxH + pad * 2);
+  const off = document.createElement("canvas");
+  off.width = tw;
+  off.height = th;
+  const octx = off.getContext("2d");
+  if (!octx) return null;
+
+  drawCroppedImage(octx, img, tw / 2, th / 2, boxW, boxH, crop);
+  octx.globalCompositeOperation = "source-in";
+  octx.fillStyle = color;
+  octx.fillRect(0, 0, tw, th);
+  return off;
+}
+
+/**
+ * Funky sticker-style boundary around the cutout person.
+ * Layered irregular rings in palette colors + a bright inner rim.
+ */
+function drawFunkyPersonBoundary(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  centerX: number,
+  centerY: number,
+  boxW: number,
+  boxH: number,
+  crop: CropState,
+  palette: PaletteColors,
+  mood: string
+) {
+  const layers =
+    mood === "bold" || mood === "creative"
+      ? [
+          { color: palette.secondary, radius: 14, steps: 20, wobble: 4 },
+          { color: palette.primary, radius: 9, steps: 18, wobble: 3 },
+          { color: "#FFFFFF", radius: 4, steps: 14, wobble: 1.5 },
+        ]
+      : mood === "elegant"
+        ? [
+            { color: palette.primary, radius: 10, steps: 18, wobble: 2 },
+            { color: palette.secondary, radius: 6, steps: 16, wobble: 1.5 },
+            { color: "#FFFFFF", radius: 3, steps: 12, wobble: 0.8 },
+          ]
+        : [
+            { color: palette.secondary, radius: 11, steps: 16, wobble: 2.5 },
+            { color: palette.primary, radius: 7, steps: 14, wobble: 1.5 },
+            { color: "#FFFFFF", radius: 3.5, steps: 12, wobble: 1 },
+          ];
+
+  for (const layer of layers) {
+    const sil = makeCroppedSilhouetteCanvas(img, boxW, boxH, crop, layer.color);
+    if (!sil) continue;
+    const tw = sil.width;
+    const th = sil.height;
+    for (let i = 0; i < layer.steps; i++) {
+      const angle = (i / layer.steps) * Math.PI * 2;
+      const wobble =
+        Math.sin(angle * 3 + i) * layer.wobble * 0.55 +
+        Math.cos(angle * 5) * layer.wobble * 0.35;
+      const r = layer.radius + wobble;
+      ctx.drawImage(
+        sil,
+        centerX + Math.cos(angle) * r - tw / 2,
+        centerY + Math.sin(angle) * r - th / 2
+      );
+    }
+  }
 }
 
 /** Draw a smooth organic blob. */
@@ -338,7 +418,10 @@ function renderPortrait(
   template: IdCardTemplate,
   useChromeEffect = false,
   lightPos: { x: number; y: number } | null = null,
-  photoFrame?: 'rectangle' | 'circle'
+  photoFrame?: 'rectangle' | 'circle',
+  useThemeBg = false,
+  palette?: PaletteColors,
+  mood = "corporate"
 ) {
   const isCircleFrame = photoFrame === 'circle';
   const br = template.portrait.borderRadiusPx || 12;
@@ -400,6 +483,20 @@ function renderPortrait(
     } else {
       roundRectPath(ctx, pr.x, pr.y, pr.width, pr.height, br);
       ctx.clip();
+    }
+    if (useThemeBg && palette) {
+      createPortraitThemeFill(ctx, pr, palette, mood);
+      drawFunkyPersonBoundary(
+        ctx,
+        portraitImage,
+        pr.x + pr.width / 2,
+        pr.y + pr.height / 2,
+        pr.width,
+        pr.height,
+        crop,
+        palette,
+        mood
+      );
     }
     drawCroppedImage(ctx, portraitImage, pr.x + pr.width / 2, pr.y + pr.height / 2, pr.width, pr.height, crop);
     ctx.restore();
@@ -946,7 +1043,8 @@ export function renderCard(ctx: CanvasRenderingContext2D, state: IdMakerState) {
   const template = state.template || idCardTemplate;
   const {
     palette: rawPalette, shapes, portraitImage, crop,
-    textFields, borderColor, roleColor, useChromeEffect, lightPos, charms, photoFrame
+    textFields, borderColor, roleColor, useChromeEffect, lightPos, charms, photoFrame,
+    mood, useThemeBg
   } = state;
 
   const palette = getRenderPalette(rawPalette, useChromeEffect);
@@ -966,7 +1064,18 @@ export function renderCard(ctx: CanvasRenderingContext2D, state: IdMakerState) {
   renderBgShapes(ctx, shapes, palette, template, useChromeEffect, lightPos);
 
   // 4. Portrait (with Chrome box frame if enabled and crop parameters)
-  renderPortrait(ctx, portraitImage, crop, template, useChromeEffect, lightPos, photoFrame);
+  renderPortrait(
+    ctx,
+    portraitImage,
+    crop,
+    template,
+    useChromeEffect,
+    lightPos,
+    photoFrame,
+    !!useThemeBg,
+    palette,
+    mood
+  );
 
   // 5. Overlay shapes — wiggly lines ABOVE portrait
   renderOverlayShapes(ctx, shapes, template, useChromeEffect, lightPos);
