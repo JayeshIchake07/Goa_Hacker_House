@@ -500,10 +500,31 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
     const idLine = id ? `🪪 Builder ID: ${id}` : "";
     const lines = [name, idLine].filter(Boolean).join("\n");
     const text = `Just got my official HH Goa 2026 Builder ID! 🌴⚡\n${lines}\n\nLess Noise. More Signal. #FrameInGoa #HH_GOA`;
-    window.open(
-      `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
-      "_blank", "width=600,height=400"
-    );
+
+    const canvas = canvasRef.current;
+    const openTweet = () => {
+      window.open(
+        `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
+        "_blank", "width=600,height=500"
+      );
+    };
+
+    // Try to copy card image to clipboard first, then open tweet
+    if (canvas) {
+      canvas.toBlob(async (blob) => {
+        if (blob) {
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+            showToast("🖼️ Card copied! Paste the image into your tweet ➜");
+          } catch {
+            // clipboard not supported — just open tweet without image hint
+          }
+        }
+        openTweet();
+      }, "image/png");
+    } else {
+      openTweet();
+    }
   };
 
   const copyImage = () => {
