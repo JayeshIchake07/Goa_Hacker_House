@@ -26,7 +26,7 @@ function AppContent() {
 
   // Profile details
   const [builderInfo, setBuilderInfo] = useState<BuilderInfo>({
-    name: "John Doe",
+    name: "Satoshi Nakamoto",
     handle: "hacker_house_goa",
     role: "Developer",
     title: "TERMINAL WIZARD",
@@ -40,6 +40,13 @@ function AppContent() {
   const [skillsList, setSkillsList]   = useState<string[]>(['React', 'Node.js', 'UI/UX', 'Python', 'Docker']);
   const [socialPlatform, setSocialPlatform] = useState<string>("instagram");
   const [socialHandle, setSocialHandle] = useState<string>("hacker_house_goa");
+
+  // Optional socials for the back of the card
+  const [github, setGithub]           = useState<string>("");
+  const [linkedin, setLinkedin]       = useState<string>("");
+  const [instagram, setInstagram]     = useState<string>("");
+  const [x, setX]                     = useState<string>("");
+  const [shareInfoLink, setShareInfoLink] = useState<string>("");
 
   // Style states
   const [mood, setMood]               = useState<string>("corporate");
@@ -100,6 +107,11 @@ function AppContent() {
       skillsList,
       socialPlatform,
       socialHandle,
+      github,
+      linkedin,
+      instagram,
+      x,
+      shareInfoLink,
       textFields,
       borderColor,
       roleColor,
@@ -115,7 +127,7 @@ function AppContent() {
     };
   }, [
     palette, mood, crop, mode, roleMode, skillsList,
-    socialPlatform, socialHandle, textFields,
+    socialPlatform, socialHandle, github, linkedin, instagram, x, shareInfoLink, textFields,
     borderColor, roleColor, useChromeEffect, lightPos,
     shapeSeed, shapes, charms, photoFrame, studioLogo,
     useThemeBg, cutoutSrc
@@ -198,6 +210,16 @@ function AppContent() {
             onSocialPlatformChange={setSocialPlatform}
             socialHandle={socialHandle}
             onSocialHandleChange={setSocialHandle}
+            github={github}
+            onGithubChange={setGithub}
+            linkedin={linkedin}
+            onLinkedinChange={setLinkedin}
+            instagram={instagram}
+            onInstagramChange={setInstagram}
+            x={x}
+            onXChange={setX}
+            shareInfoLink={shareInfoLink}
+            onShareInfoLinkChange={setShareInfoLink}
 
             mood={mood}
             onMoodChange={setMood}
@@ -240,6 +262,11 @@ function AppContent() {
             skillsList={skillsList}
             socialPlatform={socialPlatform}
             socialHandle={socialHandle}
+            github={github}
+            linkedin={linkedin}
+            instagram={instagram}
+            x={x}
+            shareInfoLink={shareInfoLink}
 
             mood={mood}
             palette={palette}

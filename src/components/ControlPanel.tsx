@@ -34,6 +34,16 @@ interface ControlPanelProps {
   onSocialPlatformChange: (s: string) => void;
   socialHandle: string;
   onSocialHandleChange: (s: string) => void;
+  github: string;
+  onGithubChange: (s: string) => void;
+  linkedin: string;
+  onLinkedinChange: (s: string) => void;
+  instagram: string;
+  onInstagramChange: (s: string) => void;
+  x: string;
+  onXChange: (s: string) => void;
+  shareInfoLink: string;
+  onShareInfoLinkChange: (s: string) => void;
 
   mood: string;
   onMoodChange: (m: string) => void;
@@ -82,10 +92,20 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onRoleModeChange,
   skillsList,
   onSkillsListChange,
-  socialPlatform,
-  onSocialPlatformChange,
-  socialHandle,
-  onSocialHandleChange,
+  socialHandle: _socialHandle,
+  onSocialPlatformChange: _onSocialPlatformChange,
+  socialPlatform: _socialPlatform,
+  onSocialHandleChange: _onSocialHandleChange,
+  github,
+  onGithubChange,
+  linkedin,
+  onLinkedinChange,
+  instagram,
+  onInstagramChange,
+  x,
+  onXChange,
+  shareInfoLink,
+  onShareInfoLinkChange,
 
   mood,
   onMoodChange,
@@ -498,6 +518,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               <input
                 type="text"
                 id="teamNameInput"
+                className="cp-input"
                 value={teamName}
                 onChange={e => onTeamNameChange(e.target.value)}
                 placeholder="Team Name"
@@ -508,6 +529,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               <input
                 type="text"
                 id="memberNameInput"
+                className="cp-input"
                 value={builderInfo.name}
                 onChange={e => onBuilderInfoChange({ ...builderInfo, name: e.target.value })}
                 placeholder="Full Name"
@@ -591,28 +613,69 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           Social Media (Back Side)
         </div>
         <div className="text-fields">
-          <div className="field-group">
-            <label htmlFor="socialPlatformSelect">Social Platform</label>
-            <select
-              id="socialPlatformSelect"
-              className="form-select"
-              value={socialPlatform}
-              onChange={e => onSocialPlatformChange(e.target.value)}
-            >
-              <option value="instagram">Instagram</option>
-              <option value="x">𝕏 / Twitter</option>
-              <option value="discord">Discord Invite</option>
-              <option value="custom">Custom URL / Link</option>
-            </select>
+          <div style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', color: 'var(--accent-gold)', marginBottom: '0.6rem', fontWeight: 700, letterSpacing: '0.06em' }}>
+            Your Social Links
           </div>
-          <div className="field-group">
-            <label htmlFor="socialHandleInput">Handle / URL</label>
+
+          <div className="cp-form-row">
+            <div className="field-group">
+              <label htmlFor="githubInput">GitHub</label>
+              <input
+                type="text"
+                id="githubInput"
+                className="cp-input"
+                value={github}
+                onChange={e => onGithubChange(e.target.value)}
+                placeholder="github.com/username"
+              />
+            </div>
+            <div className="field-group">
+              <label htmlFor="linkedinInput">LinkedIn</label>
+              <input
+                type="text"
+                id="linkedinInput"
+                className="cp-input"
+                value={linkedin}
+                onChange={e => onLinkedinChange(e.target.value)}
+                placeholder="linkedin.com/in/username"
+              />
+            </div>
+          </div>
+
+          <div className="cp-form-row" style={{ marginBottom: 0 }}>
+            <div className="field-group">
+              <label htmlFor="instagramInput">Instagram</label>
+              <input
+                type="text"
+                id="instagramInput"
+                className="cp-input"
+                value={instagram}
+                onChange={e => onInstagramChange(e.target.value)}
+                placeholder="instagram.com/username"
+              />
+            </div>
+            <div className="field-group">
+              <label htmlFor="xInput">𝕏 / Twitter</label>
+              <input
+                type="text"
+                id="xInput"
+                className="cp-input"
+                value={x}
+                onChange={e => onXChange(e.target.value)}
+                placeholder="x.com/username"
+              />
+            </div>
+          </div>
+
+          <div className="field-group" style={{ marginTop: '1.25rem' }}>
+            <label htmlFor="shareInfoLinkInput">Share Info Link (Pill Button on Card Back)</label>
             <input
               type="text"
-              id="socialHandleInput"
-              value={socialHandle}
-              onChange={e => onSocialHandleChange(e.target.value)}
-              placeholder="e.g. hacker_house_goa"
+              id="shareInfoLinkInput"
+              className="cp-input"
+              value={shareInfoLink}
+              onChange={e => onShareInfoLinkChange(e.target.value)}
+              placeholder="e.g. https://myportfolio.com"
             />
           </div>
         </div>

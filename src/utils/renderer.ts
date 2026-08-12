@@ -14,6 +14,11 @@ export interface IdMakerState {
   skillsList: string[];
   socialPlatform: string;
   socialHandle: string;
+  github?: string;
+  linkedin?: string;
+  instagram?: string;
+  x?: string;
+  shareInfoLink?: string;
   textFields: {
     eventName: string;
     teamName: string;
@@ -745,7 +750,7 @@ function renderFooter(ctx: CanvasRenderingContext2D, _palette: PaletteColors, te
   ctx.restore();
 
   const rawTeam = truncate20(textFields.teamName || 'Team Alpha', 20);
-  const rawMember = truncate20(textFields.memberName || 'John Doe', 20);
+  const rawMember = truncate20(textFields.memberName || 'Satoshi Nakamoto', 20);
   const rawRole = textFields.role || 'Developer | UI/UX';
   const formattedSkills = rawRole
     .split(/[,|]/)
@@ -762,18 +767,22 @@ function renderFooter(ctx: CanvasRenderingContext2D, _palette: PaletteColors, te
 
   // 1. Draw Name Box
   ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-  ctx.shadowBlur = 12;
-  ctx.shadowOffsetY = 4;
+   ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+   ctx.shadowBlur = 12;
+   ctx.shadowOffsetY = 4;
 
-  roundRectPath(ctx, boxX, boxY, boxW, boxH, 18);
-  ctx.fillStyle = headerGreen;
-  ctx.fill();
+   // Draw translucent emerald name box with subtle inner gradient
+   const nameBoxGrad = ctx.createLinearGradient(boxX, boxY, boxX, boxY + boxH);
+   nameBoxGrad.addColorStop(0, 'rgba(4, 47, 46, 0.7)');
+   nameBoxGrad.addColorStop(1, 'rgba(4, 47, 46, 0.5)');
+   roundRectPath(ctx, boxX, boxY, boxW, boxH, 18);
+   ctx.fillStyle = nameBoxGrad;
+   ctx.fill();
 
-  ctx.strokeStyle = '#FFFDEB'; // Cream border to match text
-  ctx.lineWidth = 2.5;
-  ctx.stroke();
-  ctx.restore();
+   ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)'; // subtle cream border
+   ctx.lineWidth = 2.5;
+   ctx.stroke();
+   ctx.restore();
 
   // 2. Draw Left & Right Sparkles (Stars) inside the box in cream color
   drawSparkle(ctx, boxX + 35, boxY + boxH / 2, 12, '#FFFDEB');
@@ -783,10 +792,10 @@ function renderFooter(ctx: CanvasRenderingContext2D, _palette: PaletteColors, te
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = '800 38px Inter, system-ui, sans-serif';
-  ctx.fillStyle = '#FFFDEB'; // Soft cream color
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
-  ctx.shadowBlur = 8;
+   ctx.font = '800 38px Inter, system-ui, sans-serif';
+   ctx.fillStyle = 'rgba(255,255,255,0.9)'; // Near-white for contrast
+   ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+   ctx.shadowBlur = 12;
 
   let memberFontSize = 38;
   while (ctx.measureText(rawMember).width > boxW - 120 && memberFontSize > 22) {
@@ -853,6 +862,97 @@ function renderFooter(ctx: CanvasRenderingContext2D, _palette: PaletteColors, te
   ctx.restore();
 }
 
+function drawSocialLogo(
+  ctx: CanvasRenderingContext2D,
+  platform: string,
+  cx: number,
+  cy: number,
+  size: number
+) {
+  const p = platform.toLowerCase();
+  if (p === 'instagram') {
+    ctx.save();
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = size * 0.08;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    // Rounded outer square
+    roundRectPath(ctx, cx - size / 2, cy - size / 2, size, size, size * 0.28);
+    ctx.stroke();
+    // Inner camera circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, size * 0.24, 0, Math.PI * 2);
+    ctx.stroke();
+    // Small lens flash dot
+    ctx.beginPath();
+    ctx.arc(cx + size * 0.24, cy - size * 0.24, size * 0.07, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fill();
+    ctx.restore();
+  } else if (p === 'linkedin') {
+    ctx.save();
+    // LinkedIn Blue-ish square
+    ctx.fillStyle = '#FFFFFF';
+    roundRectPath(ctx, cx - size / 2, cy - size / 2, size, size, size * 0.18);
+    ctx.fill();
+
+    ctx.font = `bold ${Math.round(size * 0.72)}px Inter, sans-serif`;
+    ctx.fillStyle = '#0F172A';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('in', cx, cy + size * 0.04);
+    ctx.restore();
+  } else if (p === 'github') {
+    ctx.save();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(cx, cy, size / 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Draw a minimalist cat head cutout inside the white circle
+    ctx.beginPath();
+    ctx.fillStyle = '#0F172A';
+    // Cat head circle
+    ctx.arc(cx, cy + size * 0.08, size * 0.28, 0, Math.PI * 2);
+    ctx.fill();
+    // Cat ears
+    ctx.beginPath();
+    ctx.moveTo(cx - size * 0.14, cy - size * 0.04);
+    ctx.lineTo(cx - size * 0.24, cy - size * 0.26);
+    ctx.lineTo(cx - size * 0.05, cy - size * 0.13);
+    ctx.closePath();
+    ctx.moveTo(cx + size * 0.14, cy - size * 0.04);
+    ctx.lineTo(cx + size * 0.24, cy - size * 0.26);
+    ctx.lineTo(cx + size * 0.05, cy - size * 0.13);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  } else if (p === 'x') {
+    ctx.save();
+    ctx.fillStyle = '#FFFFFF';
+    const scale = size / 24;
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    // Main thick diagonal bar
+    ctx.beginPath();
+    ctx.moveTo(-8, -8);
+    ctx.lineTo(-3, -8);
+    ctx.lineTo(8, 8);
+    ctx.lineTo(3, 8);
+    ctx.closePath();
+    ctx.fill();
+
+    // Thin diagonal line
+    ctx.beginPath();
+    ctx.moveTo(3, -8);
+    ctx.lineTo(-8, 8);
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 2.4;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
 /** 8. Colored card border. */
 function renderBorder(ctx: CanvasRenderingContext2D, borderColor: string, template: IdCardTemplate, useChromeEffect = false, lightPos: { x: number; y: number } | null = null) {
   const { widthPx: w, heightPx: h } = template.canvas;
@@ -878,7 +978,8 @@ export function renderCardBack(ctx: CanvasRenderingContext2D, state: IdMakerStat
   const template = state.template || idCardTemplate;
   const {
     palette: rawPalette, shapes, textFields, borderColor,
-    useChromeEffect, lightPos, socialPlatform, socialHandle
+    useChromeEffect, lightPos,
+    github, linkedin, instagram, x, shareInfoLink
   } = state;
 
   const palette = getRenderPalette(rawPalette, useChromeEffect);
@@ -891,106 +992,206 @@ export function renderCardBack(ctx: CanvasRenderingContext2D, state: IdMakerStat
   roundRectPath(ctx, 0, 0, template.canvas.widthPx, template.canvas.heightPx, template.cornerRadiusPx);
   ctx.clip();
 
-  // 2. Texture
-  renderTexture(ctx, palette, template);
-
   // 3. Decorative shapes (same theme as front!)
   renderBgShapes(ctx, shapes, palette, template, useChromeEffect, lightPos);
 
   // 4. Header strip ("HACKER [गोवा] HOUSE")
   renderHeader(ctx, palette, textFields || {}, template);
 
-  // 5. Social Media QR Scanner Box (Center)
-  const boxW = 520;
-  const boxH = 580;
-  const boxX = (template.canvas.widthPx - boxW) / 2;
-  const boxY = 320;
+  // --- Single Scanner (Primary Social Connect → hhgoa.com) ---
+  // Photo portrait on front: width=414px (46% of 900). Scanner is slightly bigger.
+  const scanW = 460;
+  const scanH = 560;   // portrait aspect (~1.35 tall)
+  const qrSize = 380;
 
+  // Position: horizontally centered, start just below header
+  const headerBottom = 155;
+  const scanY = headerBottom + 30;
+  const scanX = (template.canvas.widthPx - scanW) / 2;
+
+  // Fixed QR URL
+  const qrUrl = 'https://hhgoa.com/';
+
+  // Scanner background — clean white rectangle
   ctx.save();
-  ctx.shadowColor = 'rgba(34, 197, 94, 0.85)'; // Vibrant green shadow
-  ctx.shadowBlur = 32;
+  ctx.shadowColor = rawPalette.primary;
+  ctx.shadowBlur = 28;
   ctx.shadowOffsetY = 6;
-
-  // Scanner container card
-  roundRectPath(ctx, boxX, boxY, boxW, boxH, 24);
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.94)';
+  roundRectPath(ctx, scanX, scanY, scanW, scanH, 20);
+  ctx.fillStyle = '#FFFFFF';
   ctx.fill();
-
-  ctx.strokeStyle = 'rgba(34, 197, 94, 0.5)';
-  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = 'rgba(0, 0, 0, 0.07)';
+  ctx.lineWidth = 2;
   ctx.stroke();
   ctx.restore();
 
-  // Platform info & colors
-  const platform = socialPlatform || 'instagram';
-  const handleRaw = (socialHandle || 'hacker_house_goa').trim();
-  const handleClean = handleRaw.replace(/^@/, '');
-
-  let platformName = 'INSTAGRAM';
-  let badgeBg = '#E1306C';
-  let qrUrl = `https://instagram.com/${handleClean}`;
-  let platformIcon = '📸';
-
-  if (platform === 'x') {
-    platformName = '𝕏 / TWITTER';
-    badgeBg = '#000000';
-    qrUrl = `https://x.com/${handleClean}`;
-    platformIcon = '𝕏';
-  } else if (platform === 'discord') {
-    platformName = 'DISCORD';
-    badgeBg = '#5865F2';
-    qrUrl = handleClean.includes('http') ? handleClean : `https://discord.gg/${handleClean}`;
-    platformIcon = '💬';
-  } else if (platform === 'custom') {
-    platformName = 'CONNECT LINK';
-    badgeBg = '#042F2E';
-    qrUrl = handleClean.includes('http') ? handleClean : `https://${handleClean}`;
-    platformIcon = '🔗';
-  }
-
-  // Top Badge inside Scanner Box
-  const badgeW = 280;
-  const badgeH = 48;
-  const badgeX = boxX + (boxW - badgeW) / 2;
-  const badgeY = boxY + 30;
-
-  ctx.save();
-  roundRectPath(ctx, badgeX, badgeY, badgeW, badgeH, 24);
-  ctx.fillStyle = badgeBg;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.25)';
-  ctx.shadowBlur = 10;
-  ctx.fill();
-
-  ctx.font = '800 17px Inter, sans-serif';
-  ctx.fillStyle = '#FFFFFF';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(`${platformIcon}   ${platformName}`, badgeX + badgeW / 2, badgeY + badgeH / 2 + 1);
-  ctx.restore();
-
-  // QR Code Rendering
-  const qrSize = 310;
-  const qrX = boxX + (boxW - qrSize) / 2;
-  const qrY = boxY + 98;
-
+  // QR Code — fills most of white card
+  const qrX = scanX + (scanW - qrSize) / 2;
+  const qrY = scanY + 24;
   ctx.save();
   drawQRCode(ctx, qrUrl, qrX, qrY, qrSize, { darkColor: '#0F172A', lightColor: '#FFFFFF' });
   ctx.restore();
 
-  // Handle Label at Bottom of Scanner Box
+  // Labels below QR
   ctx.save();
-  ctx.font = '800 22px Inter, system-ui, sans-serif';
+  ctx.font = '700 18px Inter, monospace';
   ctx.fillStyle = '#0F172A';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  ctx.fillText('hhgoa.com', scanX + scanW / 2, scanY + scanH - 44);
 
-  const displayHandle = platform === 'custom' ? (handleClean.length > 24 ? handleClean.slice(0, 24) + '…' : handleClean) : `@${handleClean}`;
-  ctx.fillText(displayHandle, boxX + boxW / 2, boxY + boxH - 50);
-
-  ctx.font = '600 13px Inter, monospace';
+  ctx.font = '600 12px Inter, monospace';
   ctx.fillStyle = '#64748B';
-  ctx.fillText(`SCAN TO CONNECT ON ${platformName.split('/')[0].trim()}`, boxX + boxW / 2, boxY + boxH - 24);
+  ctx.fillText('SCAN TO VISIT', scanX + scanW / 2, scanY + scanH - 22);
   ctx.restore();
+
+
+  // --- Socials Window — shifted down, below scanner ---
+  const scanBottom = scanY + scanH;
+  const winW = 820;
+  const winH = 300;
+  const winX = (template.canvas.widthPx - winW) / 2;
+  const winY = scanBottom + 28;
+
+  // Collect active socials
+  const activeSocials: Array<{ platform: string; url: string; glowColor: string; bgColor: string }> = [];
+  if (github && github.trim()) {
+    activeSocials.push({
+      platform: 'github',
+      url: github.trim(),
+      glowColor: 'rgba(0, 240, 255, 0.8)',
+      bgColor: '#1a1a2e',
+    });
+  }
+  if (linkedin && linkedin.trim()) {
+    activeSocials.push({
+      platform: 'linkedin',
+      url: linkedin.trim(),
+      glowColor: 'rgba(0, 119, 181, 0.9)',
+      bgColor: '#0077B5',
+    });
+  }
+  if (instagram && instagram.trim()) {
+    activeSocials.push({
+      platform: 'instagram',
+      url: instagram.trim(),
+      glowColor: 'rgba(225, 48, 108, 0.9)',
+      bgColor: '#833AB4',
+    });
+  }
+  if (x && x.trim()) {
+    activeSocials.push({
+      platform: 'x',
+      url: x.trim(),
+      glowColor: 'rgba(255, 255, 255, 0.8)',
+      bgColor: '#000000',
+    });
+  }
+
+  ctx.save();
+  ctx.shadowColor = rawPalette.primary;
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 4;
+  roundRectPath(ctx, winX, winY, winW, winH, 24);
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.45)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.restore();
+
+  // Social Dock title
+  ctx.save();
+  ctx.font = '800 13px Inter, monospace';
+  ctx.fillStyle = rawPalette.primary;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('CONNECT FOR FUN', winX + winW / 2, winY + 28);
+  ctx.restore();
+
+  const hasShareButton = !!(shareInfoLink && shareInfoLink.trim());
+
+  if (activeSocials.length === 0) {
+    ctx.save();
+    ctx.font = '600 15px Inter, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Your social profiles will appear here', winX + winW / 2, hasShareButton ? winY + 115 : winY + 145);
+    ctx.restore();
+  } else {
+    // Horizontal layout — icon in glowing bordered circle
+    const count = activeSocials.length;
+    const colW = winW / count;
+    const iconSize = 38;
+    const circleR = 52;
+
+    activeSocials.forEach((social, idx) => {
+      const itemCenterX = winX + idx * colW + colW / 2;
+      const itemCenterY = hasShareButton ? winY + 100 : winY + 148;
+
+      // Glowing circle background
+      ctx.save();
+      ctx.shadowColor = social.glowColor;
+      ctx.shadowBlur = 22;
+      ctx.beginPath();
+      ctx.arc(itemCenterX, itemCenterY - 10, circleR, 0, Math.PI * 2);
+      ctx.fillStyle = social.bgColor;
+      ctx.fill();
+      // White glowing border
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.restore();
+
+      // Logo inside circle
+      ctx.save();
+      ctx.shadowColor = social.glowColor;
+      ctx.shadowBlur = 10;
+      drawSocialLogo(ctx, social.platform, itemCenterX, itemCenterY - 10, iconSize);
+      ctx.restore();
+
+      // URL label below
+      ctx.save();
+      ctx.font = '700 13px Inter, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const displayUrl = social.url.replace(/^(https?:\/\/)?(www\.)?/, '');
+      const truncatedText = displayUrl.length > 20 ? displayUrl.slice(0, 18) + '…' : displayUrl;
+      ctx.fillText(truncatedText, itemCenterX, itemCenterY + circleR + 4);
+      ctx.restore();
+    });
+  }
+
+  // Draw Glowing Share Info Button if present
+  if (hasShareButton) {
+    const btnW = 280;
+    const btnH = 44;
+    const btnX = winX + (winW - btnW) / 2;
+    const btnY = winY + 195;
+
+    ctx.save();
+    ctx.shadowColor = rawPalette.primary;
+    ctx.shadowBlur = 20;
+    ctx.shadowOffsetY = 2;
+    roundRectPath(ctx, btnX, btnY, btnW, btnH, 22);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.save();
+    ctx.font = '700 13px Inter, monospace';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🔗  SHARE INFO BUTTON', btnX + btnW / 2, btnY + btnH / 2 + 1);
+    ctx.restore();
+  }
 
   ctx.restore(); // end clip
 

@@ -55,7 +55,9 @@ function getBestTypeNumber(text) {
   if (len < 64) return 5;
   if (len < 84) return 6;
   if (len < 106) return 7;
-  return 8;
+  if (len < 134) return 8;
+  if (len < 160) return 9;
+  return 10;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -415,9 +417,17 @@ const QRUtil = {
 function QRMath() {}
 QRMath.EXP_TABLE = new Array(256);
 QRMath.LOG_TABLE = new Array(256);
-for (let i = 0; i < 8; i++) QRMath.EXP_TABLE[i] = 1 << i;
-for (let i = 8; i < 256; i++) QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4] ^ QRMath.EXP_TABLE[i - 5] ^ QRMath.EXP_TABLE[i - 8] ^ QRMath.EXP_TABLE[i - 1];
-for (let i = 0; i < 255; i++) QRMath.LOG_TABLE[QRMath.EXP_TABLE[i]] = i;
+(function() {
+  let num = 1;
+  for (let i = 0; i < 256; i++) {
+    QRMath.EXP_TABLE[i] = num;
+    QRMath.LOG_TABLE[num] = i;
+    num <<= 1;
+    if (num & 256) {
+      num ^= 285;
+    }
+  }
+})();
 QRMath.glog = function(n) {
   if (n < 1) return 0;
   return QRMath.LOG_TABLE[n] || 0;
@@ -466,11 +476,43 @@ function QRRSBlock(totalCount, dataCount) {
   this.dataCount = dataCount;
 }
 QRRSBlock.RS_BLOCK_TABLE = [
-  [1, 26, 16], [1, 44, 28], [1, 70, 44], [1, 100, 64], [1, 134, 86], [2, 86, 52]
+  // Version 1
+  [1, 26, 16],
+  // Version 2
+  [1, 44, 28],
+  // Version 3
+  [1, 70, 44],
+  // Version 4
+  [2, 50, 32],
+  // Version 5
+  [2, 67, 43],
+  // Version 6
+  [2, 43, 27, 2, 44, 28],
+  // Version 7
+  [4, 49, 31],
+  // Version 8
+  [2, 60, 38, 2, 61, 39],
+  // Version 9
+  [3, 58, 36, 2, 59, 37],
+  // Version 10
+  [4, 69, 43, 1, 70, 44]
 ];
 QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectionLevel) {
-  const rsBlock = QRRSBlock.RS_BLOCK_TABLE[typeNumber - 1] || [1, 44, 28];
-  return [new QRRSBlock(rsBlock[1], rsBlock[2])];
+  const rsBlock = QRRSBlock.RS_BLOCK_TABLE[typeNumber - 1];
+  if (!rsBlock) {
+    return [new QRRSBlock(44, 28)]; // Fallback
+  }
+  const list = [];
+  const length = rsBlock.length / 3;
+  for (let i = 0; i < length; i++) {
+    const count = rsBlock[i * 3 + 0];
+    const totalCount = rsBlock[i * 3 + 1];
+    const dataCount = rsBlock[i * 3 + 2];
+    for (let j = 0; j < count; j++) {
+      list.push(new QRRSBlock(totalCount, dataCount));
+    }
+  }
+  return list;
 };
 
 function QRBitBuffer() {

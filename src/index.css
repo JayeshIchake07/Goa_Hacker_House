@@ -650,6 +650,27 @@ html, body {
   gap: 0.75rem;
   margin-bottom: 0.75rem;
 }
+
+/* Field group wrapper */
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+.field-group:last-child { margin-bottom: 0; }
+
+.field-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-gold);
+}
 .cp-field {
   display: flex;
   flex-direction: column;
@@ -672,11 +693,12 @@ html, body {
 .cp-input {
   width: 100%;
   background: var(--bg-inner-panel);
-  border: 1px solid var(--panel-border);
+  border: 1px dashed var(--panel-border);
   border-radius: var(--r-sm);
   color: var(--text-main);
-  font-family: var(--font-sans);
-  font-size: 0.88rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
   padding: 0.6rem 0.8rem;
   transition: all var(--t-fast);
 }
@@ -687,7 +709,10 @@ html, body {
 .cp-input:focus {
   outline: none;
   border-color: var(--accent-cyan);
+  border-style: solid;
   box-shadow: 0 0 8px var(--accent-glow-cyan);
+  background: var(--accent-glow-cyan);
+  color: var(--accent-cyan);
 }
 .cp-input--readonly {
   flex: 1;
@@ -696,8 +721,25 @@ html, body {
   font-weight: 700;
   cursor: default;
 }
-.cp-select {
+.cp-select, .form-select {
   cursor: pointer;
+  width: 100%;
+  background: var(--bg-inner-panel);
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--r-sm);
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.6rem 0.8rem;
+  transition: all var(--t-fast);
+  appearance: auto;
+}
+.cp-select:focus, .form-select:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  border-style: solid;
+  box-shadow: 0 0 8px var(--accent-glow-cyan);
 }
 
 .cp-field-row {
@@ -762,7 +804,7 @@ html, body {
 }
 
 .preview-frame--builder {
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 3 / 4;
 }
 
 .preview-frame--punch {

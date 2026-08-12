@@ -20,6 +20,11 @@ interface PreviewPanelProps {
   skillsList: string[];
   socialPlatform: string;
   socialHandle: string;
+  github: string;
+  linkedin: string;
+  instagram: string;
+  x: string;
+  shareInfoLink: string;
 
   mood: string;
   palette: PaletteColors;
@@ -58,6 +63,11 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   skillsList,
   socialPlatform,
   socialHandle,
+  github,
+  linkedin,
+  instagram,
+  x,
+  shareInfoLink,
 
   mood,
   palette,
@@ -173,6 +183,11 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
       skillsList,
       socialPlatform,
       socialHandle,
+      github,
+      linkedin,
+      instagram,
+      x,
+      shareInfoLink,
       textFields,
       borderColor,
       roleColor,
@@ -188,7 +203,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
     };
   }, [
     palette, mood, loadedImg, crop, mode, roleMode, skillsList,
-    socialPlatform, socialHandle, textFields,
+    socialPlatform, socialHandle, github, linkedin, instagram, x, shareInfoLink, textFields,
     borderColor, roleColor, useChromeEffect, lightPos,
     shapeSeed, shapes, charms, photoFrame, studioLogoImg, useThemeBg
   ]);

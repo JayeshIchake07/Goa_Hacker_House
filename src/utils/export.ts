@@ -28,9 +28,13 @@ export function exportJPG(state: IdMakerState, scale = 1, quality = 0.95, filena
   const ctx = offscreen.getContext('2d');
   if (!ctx) return;
 
-  // JPG white background base
+  // JPEG requires solid white base — set before any clip or transform
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = '#FFFFFF';
   ctx.fillRect(0, 0, w, h);
+  ctx.restore();
 
   ctx.scale(scale, scale);
   renderCard(ctx, state);
@@ -56,8 +60,12 @@ export function exportPDF(state: IdMakerState) {
   offscreenFront.height = h;
   const ctxFront = offscreenFront.getContext('2d');
   if (!ctxFront) return;
+  ctxFront.save();
+  ctxFront.setTransform(1, 0, 0, 1, 0, 0);
+  ctxFront.globalCompositeOperation = 'source-over';
   ctxFront.fillStyle = '#FFFFFF';
   ctxFront.fillRect(0, 0, w, h);
+  ctxFront.restore();
   ctxFront.scale(scale, scale);
   renderCard(ctxFront, { ...state, cardSide: 'front' });
   const frontDataUrl = offscreenFront.toDataURL('image/jpeg', 0.95);
@@ -68,8 +76,12 @@ export function exportPDF(state: IdMakerState) {
   offscreenBack.height = h;
   const ctxBack = offscreenBack.getContext('2d');
   if (!ctxBack) return;
+  ctxBack.save();
+  ctxBack.setTransform(1, 0, 0, 1, 0, 0);
+  ctxBack.globalCompositeOperation = 'source-over';
   ctxBack.fillStyle = '#FFFFFF';
   ctxBack.fillRect(0, 0, w, h);
+  ctxBack.restore();
   ctxBack.scale(scale, scale);
   renderCard(ctxBack, { ...state, cardSide: 'back' });
   const backDataUrl = offscreenBack.toDataURL('image/jpeg', 0.95);
