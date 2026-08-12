@@ -13,6 +13,7 @@ export interface BuilderInfo {
   role: string;
   title: string;
   techStack: string;    // e.g. "Rust / Next.js / AI"
+  builderId: string;    // e.g. "#HH-GOA-7757"
 }
 
 export interface EventConfig {
@@ -44,12 +45,19 @@ export const INITIAL_CROP_STATE: CropState = {
   rotation: 0,
 };
 
+// Generate a random 4-digit HH Goa builder ID e.g. "#HH-GOA-7757"
+export function generateBuilderId(): string {
+  const num = Math.floor(1000 + Math.random() * 9000);
+  return `#HH-GOA-${num}`;
+}
+
 export const INITIAL_BUILDER_INFO: BuilderInfo = {
   name: "",
   handle: "",
   role: "Frontend",
   title: "TERMINAL WIZARD",
   techStack: "",
+  builderId: generateBuilderId(),
 };
 
 // --- Generative ID Maker Types ---

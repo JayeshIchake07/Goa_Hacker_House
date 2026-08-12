@@ -6,6 +6,7 @@ import { Background3D } from "./components/Background3D";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import { INITIAL_CROP_STATE } from "./types";
 import type { BuilderInfo, CropState, FormatMode, PaletteColors, Charm } from "./types";
+import { generateBuilderId } from "./types";
 import { getDefaultPalette } from "./utils/palette";
 import { getSoftExclusionZone } from "./utils/template";
 import { idCardTemplate } from "./utils/template";
@@ -30,7 +31,8 @@ function AppContent() {
     handle: "hacker_house_goa",
     role: "Developer",
     title: "TERMINAL WIZARD",
-    techStack: "React / Node.js"
+    techStack: "React / Node.js",
+    builderId: generateBuilderId(),
   });
 
   // Generative ID Maker details
@@ -113,6 +115,7 @@ function AppContent() {
       x,
       shareInfoLink,
       textFields,
+      builderId: builderInfo.builderId,
       borderColor,
       roleColor,
       useChromeEffect,
@@ -130,7 +133,7 @@ function AppContent() {
     socialPlatform, socialHandle, github, linkedin, instagram, x, shareInfoLink, textFields,
     borderColor, roleColor, useChromeEffect, lightPos,
     shapeSeed, shapes, charms, photoFrame, studioLogo,
-    useThemeBg, cutoutSrc
+    useThemeBg, cutoutSrc, builderInfo.builderId
   ]);
 
   const activePortraitSrc =

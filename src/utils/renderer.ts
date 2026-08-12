@@ -25,6 +25,7 @@ export interface IdMakerState {
     memberName: string;
     role: string;
   };
+  builderId?: string;
   borderColor: string;
   roleColor: string;
   useChromeEffect: boolean;
@@ -1193,6 +1194,49 @@ export function renderCardBack(ctx: CanvasRenderingContext2D, state: IdMakerStat
     ctx.restore();
   }
 
+  // --- Builder ID row at the bottom of the back ---
+  if (state.builderId) {
+    const cardW = template.canvas.widthPx;
+    const idY = template.canvas.heightPx - 58;
+
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Pill background
+    const pillW = 340;
+    const pillH = 42;
+    const pillX = cardW / 2 - pillW / 2;
+    const pillY = idY - pillH / 2;
+    roundRectPath(ctx, pillX, pillY, pillW, pillH, 21);
+    ctx.fillStyle = 'rgba(0, 229, 255, 0.08)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Credit card icon
+    ctx.font = '500 18px Inter, system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.fillText('\ud83e\udeaa', cardW / 2 - 115, idY);
+
+    // "Builder ID:" label
+    ctx.font = '600 18px Inter, monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.textAlign = 'left';
+    const label = 'Builder ID: ';
+    ctx.fillText(label, cardW / 2 - 92, idY);
+    const labelW = ctx.measureText(label).width;
+
+    // ID value — glowing cyan
+    ctx.font = '700 18px Inter, monospace';
+    ctx.fillStyle = '#00E5FF';
+    ctx.shadowColor = 'rgba(0, 229, 255, 0.8)';
+    ctx.shadowBlur = 14;
+    ctx.fillText(state.builderId, cardW / 2 - 92 + labelW, idY);
+    ctx.restore();
+  }
+
   ctx.restore(); // end clip
 
   // 6. Border
@@ -1317,7 +1361,7 @@ export function renderCard(ctx: CanvasRenderingContext2D, state: IdMakerState) {
   renderHeader(ctx, palette, textFields || {}, template);
 
   // 7. Footer strip
-  renderFooter(ctx, palette, textFields || {}, roleColor, template);
+  renderFooter(ctx, palette, { ...(textFields || {}), builderId: state.builderId || '' }, roleColor, template);
 
   ctx.restore();
 

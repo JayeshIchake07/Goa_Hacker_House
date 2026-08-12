@@ -189,6 +189,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
       x,
       shareInfoLink,
       textFields,
+      builderId: builderInfo.builderId,
       borderColor,
       roleColor,
       useChromeEffect,
@@ -494,7 +495,9 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   };
 
   const shareX = () => {
-    const text = `Just generated my official HH Goa 2026 Builder ID! 🌴⚡ Less Noise. More Signal. #FrameInGoa`;
+    const id = builderInfo.builderId || "";
+    const idPart = id ? ` | Builder ID: ${id}` : "";
+    const text = `Just generated my official HH Goa 2026 Builder ID! 🌴⚡${idPart}\nLess Noise. More Signal. #FrameInGoa #HH_GOA`;
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
       "_blank", "width=600,height=400"
@@ -523,7 +526,9 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
     canvas.toBlob(async blob => {
       if (!blob) return;
       const file = new File([blob], `hh-goa-2026-${mode}.png`, { type: "image/png" });
-      const text = `Just generated my official HH Goa 2026 Builder ID! 🌴⚡ Less Noise. More Signal. #FrameInGoa`;
+      const id = builderInfo.builderId || "";
+      const idPart = id ? ` | Builder ID: ${id}` : "";
+      const text = `Just generated my official HH Goa 2026 Builder ID! 🌴⚡${idPart}\nLess Noise. More Signal. #FrameInGoa #HH_GOA`;
       if (navigator.canShare?.({ files: [file] })) {
         await navigator.share({ title: "HH Goa 2026 Builder Pass", text, files: [file] });
       } else {
