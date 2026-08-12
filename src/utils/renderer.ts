@@ -1289,6 +1289,30 @@ export function renderCard(ctx: CanvasRenderingContext2D, state: IdMakerState) {
     drawChromaKeyedImage(ctx, state.studioLogoImage, 690, 240, 185, 115);
   }
 
+  // 5.9 #FrameInGoa hashtag — gap between portrait (ends ~825px) and footer (~950px)
+  {
+    const cardW = template.canvas.widthPx;
+    const tagY = 887; // vertical center of the gap
+    const tagText = '#FrameInGoa';
+    const dash = '——';
+
+    ctx.save();
+    // Green glow shadow
+    ctx.shadowColor = '#00C853';
+    ctx.shadowBlur = 18;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+
+    ctx.font = '700 26px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#FFE500';
+
+    // Draw dashes and hashtag as one centered line
+    ctx.fillText(`${dash}  ${tagText}  ${dash}`, cardW / 2, tagY);
+    ctx.restore();
+  }
+
   // 6. Header strip
   renderHeader(ctx, palette, textFields || {}, template);
 
